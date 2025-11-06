@@ -39,6 +39,11 @@ const ExportButton = ({ filters = {} }) => {
           filename = 'daily-updates.md';
           mimeType = 'text/markdown';
           break;
+        case 'pdf':
+          response = await exportAPI.exportPDF(params);
+          filename = 'daily-updates.pdf';
+          mimeType = 'application/pdf';
+          break;
         default:
           throw new Error('Invalid export format');
       }
@@ -95,6 +100,9 @@ const ExportButton = ({ filters = {} }) => {
         </MenuItem>
         <MenuItem onClick={() => handleExport('markdown')}>
           Export as Markdown
+        </MenuItem>
+        <MenuItem onClick={() => handleExport('pdf')}>
+          Export as PDF
         </MenuItem>
       </MenuList>
     </Menu.Root>

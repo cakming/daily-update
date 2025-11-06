@@ -1,5 +1,6 @@
 import Update from '../models/Update.js';
 import { format } from 'date-fns';
+import PDFDocument from 'pdfkit';
 
 /**
  * Export updates as CSV
@@ -178,6 +179,117 @@ export const exportAsMarkdown = async (req, res) => {
       message: 'Error exporting updates',
       error: error.message
     });
+  }
+};
+
+/**
+ * Export updates as PDF
+ * @route   GET /api/export/pdf
+ * @access  Private
+ */
+export const exportAsPDF = async (req, res) => {
+  try {
+    const { startDate, endDate, type, companyId } = req.query;
+
+    // Build query
+    const query = { userId: req.user._id };
+    if (type) query.type = type;
+    if (companyId) query.companyId = companyId;
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const updates = await Update.find(query)
+      .populate('companyId', 'name')
+      .sort({ date: -1 });
+
+    if (updates.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No updates found for export'
+      });
+    }
+
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="daily-updates-${Date.now()}.pdf"`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add title
+    doc.fontSize(24).font('Helvetica-Bold').text('Daily Updates Export', { align: 'center' });
+    doc.moveDown(0.5);
+
+    // Add metadata
+    doc.fontSize(10).font('Helvetica')
+      .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
+      .text(`Total Updates: ${updates.length}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Add separator
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+
+    // Add updates
+    updates.forEach((update, index) => {
+      // Check if we need a new page
+      if (doc.y > 700) {
+        doc.addPage();
+      }
+
+      // Format date
+      const date = update.date
+        ? format(new Date(update.date), 'MMMM dd, yyyy')
+        : update.dateRange
+          ? `${format(new Date(update.dateRange.start), 'MMM dd')} - ${format(new Date(update.dateRange.end), 'MMM dd, yyyy')}`
+          : '';
+
+      // Update header
+      doc.fontSize(16).font('Helvetica-Bold').text(date);
+      doc.fontSize(10).font('Helvetica')
+        .text(`Type: ${update.type}`, { continued: true });
+
+      if (update.companyId?.name) {
+        doc.text(` | Company: ${update.companyId.name}`);
+      } else {
+        doc.text('');
+      }
+
+      doc.moveDown(0.5);
+
+      // Update content
+      doc.fontSize(11).font('Helvetica').text(update.formattedOutput, {
+        align: 'left',
+        lineGap: 2
+      });
+
+      doc.moveDown();
+
+      // Add separator between updates (except for last one)
+      if (index < updates.length - 1) {
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+        doc.moveDown();
+      }
+    });
+
+    // Finalize PDF
+    doc.end();
+  } catch (error) {
+    console.error('Export PDF error:', error);
+    // If headers not sent yet, send error response
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error exporting updates',
+        error: error.message
+      });
+    }
   }
 };
 

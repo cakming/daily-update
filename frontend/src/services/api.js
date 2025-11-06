@@ -91,6 +91,10 @@ export const exportAPI = {
     params,
     responseType: 'blob'
   }),
+  exportPDF: (params) => api.get('/export/pdf', {
+    params,
+    responseType: 'blob'
+  }),
 };
 
 // Analytics APIs
