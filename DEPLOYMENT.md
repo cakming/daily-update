@@ -2,7 +2,127 @@
 
 This guide covers deploying the Daily Update App to production.
 
-## Prerequisites
+## Table of Contents
+1. [Docker Deployment](#docker-deployment-recommended) (Recommended)
+2. [Cloud Platform Deployment](#cloud-platform-deployment)
+3. [Manual Deployment](#backend-deployment)
+
+---
+
+## Docker Deployment (Recommended)
+
+The easiest way to deploy the full stack application.
+
+### Prerequisites
+- Docker 20.10+
+- Docker Compose 2.0+
+- 2GB RAM minimum
+- Anthropic API key
+
+### Quick Start
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd daily-update
+
+# Copy and configure environment
+cp .env.example .env
+nano .env  # Edit with your values
+
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+**Access:**
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+- MongoDB: Internal (port 27017)
+
+### Environment Configuration
+
+Edit `.env` file:
+
+```env
+# MongoDB
+MONGO_ROOT_USERNAME=admin
+MONGO_ROOT_PASSWORD=<strong-secure-password>
+
+# Backend
+JWT_SECRET=<generate-with-openssl-rand-base64-32>
+ANTHROPIC_API_KEY=<your-anthropic-key>
+
+# Frontend
+VITE_API_URL=http://localhost:5000/api
+CLIENT_URL=http://localhost:3000
+```
+
+### Production Configuration
+
+For production deployment:
+
+1. **Update URLs:**
+```env
+CLIENT_URL=https://yourdomain.com
+VITE_API_URL=https://api.yourdomain.com/api
+```
+
+2. **Secure secrets:**
+```bash
+# Generate JWT secret
+openssl rand -base64 32
+
+# Use strong MongoDB password
+```
+
+3. **SSL/TLS:**
+- Add nginx reverse proxy with Let's Encrypt
+- Configure SSL certificates
+- Update nginx.conf for HTTPS
+
+### Docker Commands
+
+```bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f [service-name]
+
+# Rebuild after changes
+docker-compose build [service-name]
+docker-compose up -d
+
+# Scale backend instances
+docker-compose up -d --scale backend=3
+```
+
+### Health Checks
+
+```bash
+# Backend health
+curl http://localhost:5000/api/health
+
+# Frontend health
+curl http://localhost:3000/health
+
+# All services status
+docker-compose ps
+```
+
+---
+
+## Cloud Platform Deployment
+
+For managed cloud deployment without Docker.
+
+### Prerequisites
 
 - MongoDB Atlas account (or MongoDB server)
 - Anthropic API key

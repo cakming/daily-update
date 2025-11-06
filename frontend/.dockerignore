@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build
+dist
+build
+.next
+out
+
+# Testing
+coverage
+.nyc_output
+*.lcov
+e2e
+test-results
+playwright-report
+playwright/.cache
+src/**/*.test.jsx
+src/**/*.test.js
+src/**/*.spec.jsx
+src/**/*.spec.js
+src/test-utils
+src/__tests__
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+.git
+.gitignore
+README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+tmp
+temp
+
+# Vite
+.vite
