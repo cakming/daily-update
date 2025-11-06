@@ -7,6 +7,7 @@ import CreateDailyUpdate from './pages/CreateDailyUpdate';
 import CreateWeeklyUpdate from './pages/CreateWeeklyUpdate';
 import History from './pages/History';
 import Companies from './pages/Companies';
+import Analytics from './pages/Analytics';
 
 function App() {
   return (
@@ -51,6 +52,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Companies />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             }
           />

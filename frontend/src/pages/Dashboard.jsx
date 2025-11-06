@@ -51,6 +51,13 @@ const Dashboard = () => {
       action: () => navigate('/companies'),
       color: 'orange',
     },
+    {
+      title: 'View Analytics',
+      description: 'Track your productivity and update trends',
+      icon: '📈',
+      action: () => navigate('/analytics'),
+      color: 'teal',
+    },
   ];
 
   return (
