@@ -6,6 +6,7 @@ import weeklyUpdateRoutes from './routes/weeklyUpdates.js';
 import companyRoutes from './routes/companies.js';
 import exportRoutes from './routes/export.js';
 import analyticsRoutes from './routes/analytics.js';
+import templateRoutes from './routes/templates.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -46,6 +47,7 @@ app.use('/api/daily-updates', aiLimiter, dailyUpdateRoutes);
 app.use('/api/weekly-updates', aiLimiter, weeklyUpdateRoutes);
 app.use('/api/export', exportLimiter, exportRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/templates', templateRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

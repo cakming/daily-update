@@ -103,4 +103,15 @@ export const analyticsAPI = {
   getTrends: (params) => api.get('/analytics/trends', { params }),
 };
 
+// Template APIs
+export const templateAPI = {
+  create: (data) => api.post('/templates', data),
+  getAll: (params) => api.get('/templates', { params }),
+  getById: (id) => api.get(`/templates/${id}`),
+  update: (id, data) => api.put(`/templates/${id}`, data),
+  delete: (id) => api.delete(`/templates/${id}`),
+  use: (id) => api.post(`/templates/${id}/use`),
+  getStats: () => api.get('/templates/stats'),
+};
+
 export default api;
