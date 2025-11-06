@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    uses: ./.github/workflows/backend-tests.yml
+    secrets: inherit
+
+  frontend-tests:
+    name: Frontend Tests
+    uses: ./.github/workflows/frontend-tests.yml
+    secrets: inherit
+
+  docker-build:
+    name: Docker Build
+    uses: ./.github/workflows/docker-build.yml
+    secrets: inherit
+
+  e2e-tests:
+    name: E2E Tests
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets: inherit
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+  status-check:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, docker-build]
+    if: always()
+
+    steps:
+      - name: Check if all jobs succeeded
+        run: |
+          if [[ "${{ needs.backend-tests.result }}" == "success" && \
+                "${{ needs.frontend-tests.result }}" == "success" && \
+                "${{ needs.docker-build.result }}" == "success" ]]; then
+            echo "✅ All CI checks passed!"
+            exit 0
+          else
+            echo "❌ Some CI checks failed"
+            echo "Backend Tests: ${{ needs.backend-tests.result }}"
+            echo "Frontend Tests: ${{ needs.frontend-tests.result }}"
+            echo "Docker Build: ${{ needs.docker-build.result }}"
+            exit 1
+          fi
+
+      - name: Comment CI status on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const backendStatus = '${{ needs.backend-tests.result }}' === 'success' ? '✅' : '❌';
+            const frontendStatus = '${{ needs.frontend-tests.result }}' === 'success' ? '✅' : '❌';
+            const dockerStatus = '${{ needs.docker-build.result }}' === 'success' ? '✅' : '❌';
+            const e2eStatus = '${{ needs.e2e-tests.result }}' === 'success' ? '✅' : '${{ needs.e2e-tests.result }}' === 'skipped' ? '⏭️' : '❌';
+
+            const comment = `## 🚦 CI Status
+
+            | Check | Status |
+            |-------|--------|
+            | Backend Tests | ${backendStatus} ${{ needs.backend-tests.result }} |
+            | Frontend Tests | ${frontendStatus} ${{ needs.frontend-tests.result }} |
+            | Docker Build | ${dockerStatus} ${{ needs.docker-build.result }} |
+            | E2E Tests | ${e2eStatus} ${{ needs.e2e-tests.result }} |
+
+            ${backendStatus === '✅' && frontendStatus === '✅' && dockerStatus === '✅' ? '✅ **All checks passed!** Ready to merge.' : '❌ **Some checks failed.** Please review the errors above.'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
