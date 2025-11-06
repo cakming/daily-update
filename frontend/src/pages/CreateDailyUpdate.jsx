@@ -13,14 +13,18 @@ import {
   Input,
   useToast,
   IconButton,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
 import { dailyUpdateAPI } from '../services/api';
+import CompanySelector from '../components/CompanySelector';
 
 const CreateDailyUpdate = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [companyId, setCompanyId] = useState(null);
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,6 +48,7 @@ const CreateDailyUpdate = () => {
       const response = await dailyUpdateAPI.create({
         rawInput,
         date,
+        companyId,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -84,6 +89,7 @@ const CreateDailyUpdate = () => {
     setFormattedOutput('');
     setSections(null);
     setDate(new Date().toISOString().split('T')[0]);
+    setCompanyId(null);
   };
 
   return (
@@ -115,6 +121,21 @@ const CreateDailyUpdate = () => {
                 onChange={(e) => setDate(e.target.value)}
                 max="2099-12-31"
               />
+            </VStack>
+          </Card.Root>
+
+          {/* Company Selector */}
+          <Card.Root p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Company/Client</Heading>
+              <FormControl>
+                <FormLabel>Select Company (Optional)</FormLabel>
+                <CompanySelector
+                  value={companyId}
+                  onChange={setCompanyId}
+                  placeholder="Select company/client (optional)"
+                />
+              </FormControl>
             </VStack>
           </Card.Root>
 

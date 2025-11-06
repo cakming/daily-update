@@ -44,6 +44,13 @@ const Dashboard = () => {
       action: () => navigate('/history'),
       color: 'purple',
     },
+    {
+      title: 'Manage Companies',
+      description: 'Organize updates by company or client',
+      icon: '🏢',
+      action: () => navigate('/companies'),
+      color: 'orange',
+    },
   ];
 
   return (
@@ -79,7 +86,7 @@ const Dashboard = () => {
             </Text>
           </Box>
 
-          <SimpleGrid columns={{ base: 1, md: 3 }} gap={6}>
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
             {cards.map((card, index) => (
               <Card.Root
                 key={index}

@@ -64,4 +64,39 @@ export const weeklyUpdateAPI = {
   delete: (id) => api.delete(`/weekly-updates/${id}`),
 };
 
+// Company APIs
+export const companyAPI = {
+  create: (data) => api.post('/companies', data),
+  getAll: (params) => api.get('/companies', { params }),
+  getById: (id) => api.get(`/companies/${id}`),
+  update: (id, data) => api.put(`/companies/${id}`, data),
+  delete: (id, permanent = false) => api.delete(`/companies/${id}`, {
+    params: { permanent }
+  }),
+  getStats: (id) => api.get(`/companies/${id}/stats`),
+};
+
+// Export APIs
+export const exportAPI = {
+  getMetadata: (params) => api.get('/export/metadata', { params }),
+  exportCSV: (params) => api.get('/export/csv', {
+    params,
+    responseType: 'blob'
+  }),
+  exportJSON: (params) => api.get('/export/json', {
+    params,
+    responseType: 'blob'
+  }),
+  exportMarkdown: (params) => api.get('/export/markdown', {
+    params,
+    responseType: 'blob'
+  }),
+};
+
+// Analytics APIs
+export const analyticsAPI = {
+  getDashboard: (params) => api.get('/analytics/dashboard', { params }),
+  getTrends: (params) => api.get('/analytics/trends', { params }),
+};
+
 export default api;

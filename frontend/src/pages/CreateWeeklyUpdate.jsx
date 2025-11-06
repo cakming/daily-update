@@ -12,8 +12,11 @@ import {
   Input,
   useToast,
   Textarea,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
 import { weeklyUpdateAPI } from '../services/api';
+import CompanySelector from '../components/CompanySelector';
 
 const CreateWeeklyUpdate = () => {
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ const CreateWeeklyUpdate = () => {
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [companyId, setCompanyId] = useState(null);
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [sections, setSections] = useState(null);
@@ -57,6 +61,7 @@ const CreateWeeklyUpdate = () => {
         startDate,
         endDate,
         rawInput: rawInput || undefined,
+        companyId,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -103,6 +108,7 @@ const CreateWeeklyUpdate = () => {
         rawInput: rawInput || 'Generated from daily updates',
         formattedOutput,
         sections,
+        companyId,
       });
 
       toast({
@@ -138,6 +144,7 @@ const CreateWeeklyUpdate = () => {
   const handleReset = () => {
     setStartDate('');
     setEndDate('');
+    setCompanyId(null);
     setRawInput('');
     setFormattedOutput('');
     setSections(null);
@@ -192,6 +199,21 @@ const CreateWeeklyUpdate = () => {
                   />
                 </VStack>
               </HStack>
+            </VStack>
+          </Card.Root>
+
+          {/* Company Selector */}
+          <Card.Root p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Company/Client</Heading>
+              <FormControl>
+                <FormLabel>Select Company (Optional)</FormLabel>
+                <CompanySelector
+                  value={companyId}
+                  onChange={setCompanyId}
+                  placeholder="Select company/client (optional)"
+                />
+              </FormControl>
             </VStack>
           </Card.Root>
 

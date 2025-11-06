@@ -19,8 +19,12 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
-import { dailyUpdateAPI, weeklyUpdateAPI } from '../services/api';
+import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
+import CompanySelector from '../components/CompanySelector';
+import ExportButton from '../components/ExportButton';
 import { format } from 'date-fns';
 
 const History = () => {
@@ -31,17 +35,34 @@ const History = () => {
   const [weeklyUpdates, setWeeklyUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [companies, setCompanies] = useState([]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
 
   useEffect(() => {
     fetchUpdates();
-  }, []);
+  }, [selectedCompanyId]);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await companyAPI.getAll();
+      setCompanies(response.data.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    }
+  };
 
   const fetchUpdates = async () => {
     setLoading(true);
     try {
+      const params = selectedCompanyId ? { companyId: selectedCompanyId } : {};
+
       const [dailyResponse, weeklyResponse] = await Promise.all([
-        dailyUpdateAPI.getAll(),
-        weeklyUpdateAPI.getAll(),
+        dailyUpdateAPI.getAll(params),
+        weeklyUpdateAPI.getAll(params),
       ]);
 
       setDailyUpdates(dailyResponse.data.data);
@@ -111,10 +132,16 @@ const History = () => {
     );
   };
 
+  const getCompanyById = (companyId) => {
+    return companies.find(c => c._id === companyId);
+  };
+
   const UpdateCard = ({ update, type }) => {
     const dateDisplay = type === 'daily'
       ? format(new Date(update.date), 'MMMM dd, yyyy')
       : `${format(new Date(update.dateRange.start), 'MMM dd')} - ${format(new Date(update.dateRange.end), 'MMM dd, yyyy')}`;
+
+    const company = update.companyId ? getCompanyById(update.companyId) : null;
 
     return (
       <Card.Root p={6}>
@@ -125,6 +152,15 @@ const History = () => {
                 <Badge colorScheme={type === 'daily' ? 'blue' : 'green'}>
                   {type === 'daily' ? 'Daily' : 'Weekly'}
                 </Badge>
+                {company && (
+                  <Badge
+                    bg={company.color}
+                    color="white"
+                    fontSize="xs"
+                  >
+                    {company.name}
+                  </Badge>
+                )}
                 <Text fontSize="sm" color="gray.600">
                   {dateDisplay}
                 </Text>
@@ -181,9 +217,14 @@ const History = () => {
             <Heading size="lg" color="purple.600">
               Update History
             </Heading>
-            <Button onClick={() => navigate('/dashboard')} variant="outline">
-              Back to Dashboard
-            </Button>
+            <HStack gap={2}>
+              <ExportButton
+                filters={selectedCompanyId ? { companyId: selectedCompanyId } : {}}
+              />
+              <Button onClick={() => navigate('/dashboard')} variant="outline">
+                Back to Dashboard
+              </Button>
+            </HStack>
           </HStack>
         </Container>
       </Box>
@@ -191,14 +232,24 @@ const History = () => {
       {/* Main Content */}
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
-          {/* Search */}
+          {/* Search and Filters */}
           <Card.Root p={4}>
-            <Input
-              placeholder="Search updates..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              size="lg"
-            />
+            <VStack gap={4} align="stretch">
+              <Input
+                placeholder="Search updates..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size="lg"
+              />
+              <FormControl>
+                <FormLabel fontSize="sm">Filter by Company</FormLabel>
+                <CompanySelector
+                  value={selectedCompanyId}
+                  onChange={setSelectedCompanyId}
+                  placeholder="All companies"
+                />
+              </FormControl>
+            </VStack>
           </Card.Root>
 
           {/* Stats */}
