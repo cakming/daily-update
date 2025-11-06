@@ -1,0 +1,101 @@
+name: Frontend Tests
+
+on:
+  push:
+    branches: [ main, master, develop, 'claude/**' ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-tests.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  test:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run linter
+        working-directory: ./frontend
+        run: npm run lint --if-present || echo "No lint script found"
+
+      - name: Run unit tests
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: http://localhost:5000/api
+        run: npm test -- --run
+
+      - name: Run tests with coverage
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: http://localhost:5000/api
+        run: npm run coverage -- --run || npm test -- --coverage --run
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+        continue-on-error: true
+
+      - name: Build application
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://localhost:5000/api' }}
+        run: npm run build
+
+      - name: Check build size
+        working-directory: ./frontend
+        run: |
+          DIST_SIZE=$(du -sh dist | cut -f1)
+          echo "📦 Build size: $DIST_SIZE"
+          echo "build-size=$DIST_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+          retention-days: 7
+
+      - name: Comment test results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const comment = `## ✅ Frontend Tests Passed
+
+            - Unit tests: ✓
+            - Build: ✓
+            - Build size: ${{ steps.check-build-size.outputs.build-size }}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -8,6 +8,14 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test-utils/setup.js'],
+    env: {
+      VITE_API_URL: 'http://localhost:5000/api'
+    },
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost:3000'
+      }
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

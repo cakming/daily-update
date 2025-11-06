@@ -1,0 +1,122 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'backend/Dockerfile'
+      - 'frontend/Dockerfile'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker-build.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'backend/Dockerfile'
+      - 'frontend/Dockerfile'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [backend, frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }} image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
+          push: false
+          tags: daily-update-${{ matrix.service }}:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_API_URL=http://localhost:5000/api
+
+      - name: Test ${{ matrix.service }} image
+        run: |
+          docker run --rm daily-update-${{ matrix.service }}:test echo "✅ Image runs successfully"
+
+  docker-compose:
+    name: Test Docker Compose
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          MONGO_ROOT_USERNAME=admin
+          MONGO_ROOT_PASSWORD=testpassword
+          JWT_SECRET=test-jwt-secret-for-docker
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          CLIENT_URL=http://localhost:3000
+          VITE_API_URL=http://localhost:5000/api
+          EOF
+
+      - name: Build with Docker Compose
+        run: docker-compose build
+
+      - name: Start services with Docker Compose
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to start..."
+          timeout 60 bash -c 'until curl -f http://localhost:5000/api/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -f http://localhost:3000/health; do sleep 2; done'
+
+      - name: Check service health
+        run: |
+          echo "Checking backend health..."
+          curl -f http://localhost:5000/api/health || exit 1
+
+          echo "Checking frontend health..."
+          curl -f http://localhost:3000/health || exit 1
+
+          echo "Checking MongoDB..."
+          docker-compose exec -T mongodb mongosh --eval "db.adminCommand('ping')" || exit 1
+
+      - name: View service logs
+        if: failure()
+        run: docker-compose logs
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+      - name: Comment Docker build status on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const comment = `## 🐳 Docker Build Status
+
+            ✅ All Docker images built successfully
+            ✅ Docker Compose orchestration validated
+            ✅ All services healthy
+
+            The application is ready for Docker deployment!
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,196 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '!.github/workflows/deploy.yml'
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci --only=production
+
+      - name: Run tests before deploy
+        working-directory: ./backend
+        env:
+          NODE_ENV: test
+          MONGODB_URI: ${{ secrets.MONGODB_URI_TEST }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: npm test
+
+      # Railway deployment
+      - name: Deploy to Railway
+        if: vars.DEPLOY_PLATFORM == 'railway'
+        run: |
+          echo "Deploying to Railway..."
+          # Install Railway CLI
+          npm install -g @railway/cli
+          # Deploy backend
+          cd backend
+          railway up --service backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      # Render deployment
+      - name: Deploy to Render
+        if: vars.DEPLOY_PLATFORM == 'render'
+        run: |
+          echo "Deploying to Render..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+
+      # Heroku deployment
+      - name: Deploy to Heroku
+        if: vars.DEPLOY_PLATFORM == 'heroku'
+        uses: akhileshns/heroku-deploy@v3.13.15
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME_BACKEND }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          appdir: backend
+
+      # Docker Registry push
+      - name: Login to Docker Hub
+        if: vars.DEPLOY_PLATFORM == 'docker'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        if: vars.DEPLOY_PLATFORM == 'docker'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/daily-update-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/daily-update-backend:${{ github.sha }}
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+      # Vercel deployment
+      - name: Deploy to Vercel
+        if: vars.DEPLOY_PLATFORM_FRONTEND == 'vercel'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          vercel-args: --prod
+
+      # Netlify deployment
+      - name: Deploy to Netlify
+        if: vars.DEPLOY_PLATFORM_FRONTEND == 'netlify'
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: './frontend/dist'
+          production-deploy: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      # Cloudflare Pages deployment
+      - name: Deploy to Cloudflare Pages
+        if: vars.DEPLOY_PLATFORM_FRONTEND == 'cloudflare'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ./frontend/dist --project-name=daily-update
+
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Deployment Success Notification
+        if: needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success'
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Backend: Deployed"
+          echo "Frontend: Deployed"
+
+      - name: Deployment Failure Notification
+        if: needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure'
+        run: |
+          echo "❌ Deployment failed!"
+          exit 1
+
+      # Optional: Slack notification
+      - name: Slack Notification
+        if: vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "Deployment ${{ needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success' && '✅ Successful' || '❌ Failed' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Deployment to ${{ github.event.inputs.environment || 'production' }}\n*Backend*: ${{ needs.deploy-backend.result }}\n*Frontend*: ${{ needs.deploy-frontend.result }}\n*Commit*: <${{ github.event.head_commit.url }}|${{ github.event.head_commit.message }}>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
