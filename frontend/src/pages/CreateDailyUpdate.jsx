@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -15,12 +15,14 @@ import {
   IconButton,
   FormControl,
   FormLabel,
+  Select,
 } from '@chakra-ui/react';
-import { dailyUpdateAPI } from '../services/api';
+import { dailyUpdateAPI, templateAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 
 const CreateDailyUpdate = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -29,6 +31,48 @@ const CreateDailyUpdate = () => {
   const [formattedOutput, setFormattedOutput] = useState('');
   const [loading, setLoading] = useState(false);
   const [sections, setSections] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+
+  // Load templates on mount
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  // Load template content from navigation state if provided
+  useEffect(() => {
+    if (location.state?.templateContent) {
+      setRawInput(location.state.templateContent);
+      // Clear the state to prevent reloading on revisit
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await templateAPI.getAll({ type: 'daily' });
+      setTemplates(response.data.data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
+
+  const handleTemplateSelect = (templateId) => {
+    setSelectedTemplate(templateId);
+    if (templateId) {
+      const template = templates.find(t => t._id === templateId);
+      if (template) {
+        setRawInput(template.content);
+        toast({
+          title: 'Template loaded',
+          description: `Using "${template.name}" template`,
+          status: 'info',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
+    }
+  };
 
   const handleGenerate = async () => {
     if (!rawInput.trim()) {
@@ -90,6 +134,7 @@ const CreateDailyUpdate = () => {
     setSections(null);
     setDate(new Date().toISOString().split('T')[0]);
     setCompanyId(null);
+    setSelectedTemplate('');
   };
 
   return (
@@ -139,10 +184,51 @@ const CreateDailyUpdate = () => {
             </VStack>
           </Card.Root>
 
+          {/* Template Selector */}
+          {templates.length > 0 && (
+            <Card.Root p={6}>
+              <VStack align="start" gap={4}>
+                <HStack justify="space-between" w="full">
+                  <Heading size="md">Use Template</Heading>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/templates')}
+                  >
+                    Manage Templates
+                  </Button>
+                </HStack>
+                <Select
+                  placeholder="Select a template (optional)"
+                  value={selectedTemplate}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                >
+                  {templates.map((template) => (
+                    <option key={template._id} value={template._id}>
+                      {template.name}
+                      {template.category && ` (${template.category})`}
+                    </option>
+                  ))}
+                </Select>
+              </VStack>
+            </Card.Root>
+          )}
+
           {/* Input Section */}
           <Card.Root p={6}>
             <VStack align="start" gap={4}>
-              <Heading size="md">Paste Technical Update</Heading>
+              <HStack justify="space-between" w="full">
+                <Heading size="md">Paste Technical Update</Heading>
+                {templates.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/templates')}
+                  >
+                    Create Template
+                  </Button>
+                )}
+              </HStack>
               <Text color="gray.600" fontSize="sm">
                 Paste your technical team updates below. The AI will convert it to client-friendly language.
               </Text>

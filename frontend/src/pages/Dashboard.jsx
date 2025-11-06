@@ -12,6 +12,7 @@ import {
   Icon,
 } from '@chakra-ui/react';
 import { useAuth } from '../context/AuthContext';
+import ColorModeToggle from '../components/ColorModeToggle';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -52,6 +53,13 @@ const Dashboard = () => {
       color: 'orange',
     },
     {
+      title: 'Update Templates',
+      description: 'Create and manage reusable update templates',
+      icon: '📋',
+      action: () => navigate('/templates'),
+      color: 'pink',
+    },
+    {
       title: 'View Analytics',
       description: 'Track your productivity and update trends',
       icon: '📈',
@@ -74,9 +82,12 @@ const Dashboard = () => {
                 Welcome back, {user?.name}!
               </Text>
             </VStack>
-            <Button onClick={handleLogout} variant="outline" colorScheme="red">
-              Logout
-            </Button>
+            <HStack>
+              <ColorModeToggle />
+              <Button onClick={handleLogout} variant="outline" colorScheme="red">
+                Logout
+              </Button>
+            </HStack>
           </HStack>
         </Container>
       </Box>

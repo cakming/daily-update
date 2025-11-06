@@ -152,7 +152,7 @@ describe('Daily Update Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        message: 'An update already exists for this date. Please use the update endpoint to modify it.'
+        message: 'An update already exists for this date and company. Please use the update endpoint to modify it.'
       });
     });
 

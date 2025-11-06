@@ -60,3 +60,33 @@ export const strictLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/**
+ * Export rate limiter
+ * Limits: 10 requests per 15 minutes (prevent export abuse)
+ */
+export const exportLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: {
+    success: false,
+    message: 'Too many export requests, please try again after 15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Password reset rate limiter
+ * Limits: 3 requests per hour (very restrictive to prevent abuse)
+ */
+export const resetPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: {
+    success: false,
+    message: 'Too many password reset attempts, please try again after an hour'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

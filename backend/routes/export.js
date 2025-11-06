@@ -3,6 +3,7 @@ import {
   exportAsCSV,
   exportAsJSON,
   exportAsMarkdown,
+  exportAsPDF,
   getExportMetadata
 } from '../controllers/exportController.js';
 import { protect } from '../middleware/auth.js';
@@ -44,5 +45,13 @@ router.get('/json', exportAsJSON);
  * @access  Private
  */
 router.get('/markdown', exportAsMarkdown);
+
+/**
+ * @route   GET /api/export/pdf
+ * @desc    Export updates as PDF
+ * @query   startDate, endDate, type, companyId
+ * @access  Private
+ */
+router.get('/pdf', exportAsPDF);
 
 export default router;

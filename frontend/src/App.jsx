@@ -8,6 +8,7 @@ import CreateWeeklyUpdate from './pages/CreateWeeklyUpdate';
 import History from './pages/History';
 import Companies from './pages/Companies';
 import Analytics from './pages/Analytics';
+import Templates from './pages/Templates';
 
 function App() {
   return (
@@ -60,6 +61,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/templates"
+            element={
+              <ProtectedRoute>
+                <Templates />
               </ProtectedRoute>
             }
           />
