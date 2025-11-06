@@ -6,10 +6,23 @@ import weeklyUpdateRoutes from './routes/weeklyUpdates.js';
 import companyRoutes from './routes/companies.js';
 import exportRoutes from './routes/export.js';
 import analyticsRoutes from './routes/analytics.js';
-import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
+import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
+import {
+  initSentry,
+  sentryRequestHandler,
+  sentryTracingHandler,
+  sentryErrorHandler,
+} from './config/sentry.js';
 
 // Initialize Express app
 const app = express();
+
+// Initialize Sentry (must be first)
+initSentry(app);
+
+// Sentry request handler (must be before other middleware)
+app.use(sentryRequestHandler());
+app.use(sentryTracingHandler());
 
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
@@ -29,9 +42,9 @@ app.use('/api/', apiLimiter);
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/companies', companyRoutes);
-app.use('/api/daily-updates', dailyUpdateRoutes);
-app.use('/api/weekly-updates', weeklyUpdateRoutes);
-app.use('/api/export', exportRoutes);
+app.use('/api/daily-updates', aiLimiter, dailyUpdateRoutes);
+app.use('/api/weekly-updates', aiLimiter, weeklyUpdateRoutes);
+app.use('/api/export', exportLimiter, exportRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
@@ -42,6 +55,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Sentry error handler (must be after routes, before other error handlers)
+app.use(sentryErrorHandler());
 
 // Error handling middleware
 app.use((err, req, res, next) => {
