@@ -57,3 +57,48 @@ Object.assign(navigator, {
 // Mock window.location
 delete window.location;
 window.location = { href: '', assign: vi.fn(), replace: vi.fn(), reload: vi.fn() };
+
+// Mock CSS parsing for Chakra UI - fixes jsdom CSS parsing errors
+// jsdom has trouble parsing complex CSS-in-JS from Chakra UI v3
+const originalConsoleError = console.error;
+console.error = (...args) => {
+  // Suppress CSS parsing errors from jsdom/Chakra UI
+  if (
+    typeof args[0] === 'string' &&
+    (args[0].includes('Error: Could not parse CSS stylesheet') ||
+     args[0].includes('Error parsing CSS') ||
+     args[0].includes('@layer'))
+  ) {
+    return;
+  }
+  originalConsoleError(...args);
+};
+
+// Mock ResizeObserver (not available in jsdom)
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock IntersectionObserver (not available in jsdom)
+global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
+// Mock matchMedia (for responsive design tests)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
