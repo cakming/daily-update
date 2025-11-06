@@ -3,9 +3,15 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import dailyUpdateRoutes from './routes/dailyUpdates.js';
 import weeklyUpdateRoutes from './routes/weeklyUpdates.js';
+import exportRoutes from './routes/export.js';
+import analyticsRoutes from './routes/analytics.js';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
 
 // Initialize Express app
 const app = express();
+
+// Trust proxy for rate limiting
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
@@ -16,10 +22,15 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Apply general rate limiting to all API routes
+app.use('/api/', apiLimiter);
+
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/daily-updates', dailyUpdateRoutes);
 app.use('/api/weekly-updates', weeklyUpdateRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
