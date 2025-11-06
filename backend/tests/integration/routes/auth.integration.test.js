@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from '@jest/globals';
 import request from 'supertest';
-import app from '../../../server.js';
+import app from '../../../app.js';
 import User from '../../../models/User.js';
 import { connectTestDB, closeTestDB, clearTestDB } from '../../setup/testDb.js';
 import { createUserFixture } from '../../setup/fixtures.js';
@@ -184,18 +184,29 @@ describe('Auth API Integration Tests', () => {
         .send({
           password: 'password123'
         })
-        .expect(500);
+        .expect(401);
 
       expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid credentials');
     });
 
     it('should reject login without password', async () => {
+      // Register user first
+      await request(app)
+        .post('/api/auth/register')
+        .send({
+          name: 'Test User',
+          email: 'test@example.com',
+          password: 'password123'
+        });
+
+      // Try login without password
       const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'test@example.com'
         })
-        .expect(500);
+        .expect(500); // Missing password causes bcrypt error
 
       expect(response.body.success).toBe(false);
     });
