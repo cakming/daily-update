@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import app from '../../app.js';
-import connectDB from '../../config/db.js';
+import { connectTestDB, closeTestDB, clearTestDB } from '../setup/testDb.js';
 import mongoose from 'mongoose';
 import User from '../../models/User.js';
 import Update from '../../models/Update.js';
@@ -13,17 +13,17 @@ describe('Analytics Integration Tests', () => {
   let companyId;
 
   beforeAll(async () => {
-    await connectDB();
-  });
+    await connectTestDB();
+  }, 30000);
 
   afterAll(async () => {
-    await User.deleteMany({ email: /analytics-test/ });
-    await Update.deleteMany({ userId });
-    await Company.deleteMany({ name: /Test Company/ });
-    await mongoose.connection.close();
-  });
+    await closeTestDB();
+  }, 30000);
 
   beforeEach(async () => {
+    // Clear database before each test
+    await clearTestDB();
+
     // Create test user
     const userRes = await request(app)
       .post('/api/auth/register')
@@ -33,8 +33,13 @@ describe('Analytics Integration Tests', () => {
         password: 'Test123456',
       });
 
-    authToken = userRes.body.token;
-    userId = userRes.body.user._id;
+    if (!userRes.body.success || !userRes.body.data.token) {
+      console.error('Registration failed:', userRes.body);
+      throw new Error('Failed to create test user');
+    }
+
+    authToken = userRes.body.data.token;
+    userId = userRes.body.data._id;
 
     // Create a test company
     const companyRes = await request(app)
