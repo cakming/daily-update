@@ -9,9 +9,16 @@ import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths } 
 export const getDashboard = async (req, res) => {
   try {
     const userId = req.user._id;
+    const { companyId } = req.query;
 
-    // Get all updates for the user
-    const allUpdates = await Update.find({ userId });
+    // Build query
+    const query = { userId };
+    if (companyId) {
+      query.companyId = companyId;
+    }
+
+    // Get all updates for the user (optionally filtered by company)
+    const allUpdates = await Update.find(query);
 
     // Calculate various metrics
     const now = new Date();
@@ -166,18 +173,26 @@ export const getDashboard = async (req, res) => {
 export const getProductivityTrends = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { period = '30' } = req.query; // days
+    const { period = '30', companyId } = req.query; // days
 
     const daysAgo = parseInt(period);
     const startDate = subDays(new Date(), daysAgo);
 
-    const updates = await Update.find({
+    // Build query
+    const query = {
       userId,
       $or: [
         { date: { $gte: startDate } },
         { 'dateRange.start': { $gte: startDate } }
       ]
-    }).sort({ createdAt: 1 });
+    };
+
+    // Add company filter if provided
+    if (companyId) {
+      query.companyId = companyId;
+    }
+
+    const updates = await Update.find(query).sort({ createdAt: 1 });
 
     // Group by date
     const dailyCounts = {};

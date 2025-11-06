@@ -8,7 +8,7 @@ import { processWeeklyUpdate } from '../services/claudeService.js';
  */
 export const generateWeeklyUpdate = async (req, res) => {
   try {
-    const { startDate, endDate, rawInput } = req.body;
+    const { startDate, endDate, rawInput, companyId } = req.body;
 
     if (!startDate || !endDate) {
       return res.status(400).json({
@@ -17,15 +17,23 @@ export const generateWeeklyUpdate = async (req, res) => {
       });
     }
 
-    // Fetch daily updates for the date range
-    const dailyUpdates = await Update.find({
+    // Build query for daily updates
+    const dailyQuery = {
       userId: req.user._id,
       type: 'daily',
       date: {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       }
-    }).sort({ date: 1 });
+    };
+
+    // Filter by company if provided
+    if (companyId) {
+      dailyQuery.companyId = companyId;
+    }
+
+    // Fetch daily updates for the date range
+    const dailyUpdates = await Update.find(dailyQuery).sort({ date: 1 });
 
     if (dailyUpdates.length === 0 && !rawInput) {
       return res.status(400).json({
@@ -73,7 +81,7 @@ export const generateWeeklyUpdate = async (req, res) => {
  */
 export const createWeeklyUpdate = async (req, res) => {
   try {
-    const { startDate, endDate, rawInput, formattedOutput, sections } = req.body;
+    const { startDate, endDate, rawInput, formattedOutput, sections, companyId } = req.body;
 
     if (!startDate || !endDate) {
       return res.status(400).json({
@@ -89,23 +97,32 @@ export const createWeeklyUpdate = async (req, res) => {
       });
     }
 
-    // Check if a weekly update already exists for this date range
-    const existingUpdate = await Update.findOne({
+    // Build query to check for existing update
+    const existingQuery = {
       userId: req.user._id,
       type: 'weekly',
       'dateRange.start': new Date(startDate),
       'dateRange.end': new Date(endDate)
-    });
+    };
+
+    // Check for same company if companyId is provided
+    if (companyId) {
+      existingQuery.companyId = companyId;
+    } else {
+      existingQuery.companyId = { $exists: false };
+    }
+
+    const existingUpdate = await Update.findOne(existingQuery);
 
     if (existingUpdate) {
       return res.status(400).json({
         success: false,
-        message: 'A weekly update already exists for this date range. Please use the update endpoint to modify it.'
+        message: 'A weekly update already exists for this date range and company. Please use the update endpoint to modify it.'
       });
     }
 
     // Create the weekly update
-    const update = await Update.create({
+    const updateData = {
       userId: req.user._id,
       type: 'weekly',
       dateRange: {
@@ -115,7 +132,14 @@ export const createWeeklyUpdate = async (req, res) => {
       rawInput: rawInput || 'Generated from daily updates',
       formattedOutput,
       sections
-    });
+    };
+
+    // Add companyId if provided
+    if (companyId) {
+      updateData.companyId = companyId;
+    }
+
+    const update = await Update.create(updateData);
 
     res.status(201).json({
       success: true,
@@ -138,12 +162,17 @@ export const createWeeklyUpdate = async (req, res) => {
  */
 export const getWeeklyUpdates = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, companyId } = req.query;
 
     let query = {
       userId: req.user._id,
       type: 'weekly'
     };
+
+    // Filter by company if provided
+    if (companyId) {
+      query.companyId = companyId;
+    }
 
     // Search functionality
     if (search) {
@@ -153,7 +182,9 @@ export const getWeeklyUpdates = async (req, res) => {
       ];
     }
 
-    const updates = await Update.find(query).sort({ 'dateRange.start': -1 });
+    const updates = await Update.find(query)
+      .populate('companyId', 'name color')
+      .sort({ 'dateRange.start': -1 });
 
     res.json({
       success: true,
@@ -231,15 +262,23 @@ export const updateWeeklyUpdate = async (req, res) => {
       const start = startDate ? new Date(startDate) : update.dateRange.start;
       const end = endDate ? new Date(endDate) : update.dateRange.end;
 
-      // Fetch daily updates for the new date range
-      const dailyUpdates = await Update.find({
+      // Build query for daily updates
+      const dailyQuery = {
         userId: req.user._id,
         type: 'daily',
         date: {
           $gte: start,
           $lte: end
         }
-      }).sort({ date: 1 });
+      };
+
+      // Filter by company if the weekly update has a companyId
+      if (update.companyId) {
+        dailyQuery.companyId = update.companyId;
+      }
+
+      // Fetch daily updates for the new date range
+      const dailyUpdates = await Update.find(dailyQuery).sort({ date: 1 });
 
       const { formattedOutput, sections } = await processWeeklyUpdate(
         dailyUpdates.length > 0 ? dailyUpdates : [{ rawInput, date: start }],

@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import dailyUpdateRoutes from './routes/dailyUpdates.js';
 import weeklyUpdateRoutes from './routes/weeklyUpdates.js';
+import companyRoutes from './routes/companies.js';
 import exportRoutes from './routes/export.js';
 import analyticsRoutes from './routes/analytics.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.js';
@@ -27,6 +28,7 @@ app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/companies', companyRoutes);
 app.use('/api/daily-updates', dailyUpdateRoutes);
 app.use('/api/weekly-updates', weeklyUpdateRoutes);
 app.use('/api/export', exportRoutes);

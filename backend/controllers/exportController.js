@@ -8,18 +8,21 @@ import { format } from 'date-fns';
  */
 export const exportAsCSV = async (req, res) => {
   try {
-    const { startDate, endDate, type } = req.query;
+    const { startDate, endDate, type, companyId } = req.query;
 
     // Build query
     const query = { userId: req.user._id };
     if (type) query.type = type;
+    if (companyId) query.companyId = companyId;
     if (startDate || endDate) {
       query.date = {};
       if (startDate) query.date.$gte = new Date(startDate);
       if (endDate) query.date.$lte = new Date(endDate);
     }
 
-    const updates = await Update.find(query).sort({ date: -1 });
+    const updates = await Update.find(query)
+      .populate('companyId', 'name')
+      .sort({ date: -1 });
 
     if (updates.length === 0) {
       return res.status(404).json({
@@ -29,14 +32,15 @@ export const exportAsCSV = async (req, res) => {
     }
 
     // Generate CSV
-    const csvHeader = 'Date,Type,Raw Input,Formatted Output\n';
+    const csvHeader = 'Date,Type,Company,Raw Input,Formatted Output\n';
     const csvRows = updates.map(update => {
       const date = update.date ? format(new Date(update.date), 'yyyy-MM-dd') :
                    update.dateRange ? format(new Date(update.dateRange.start), 'yyyy-MM-dd') : '';
       const type = update.type || '';
+      const company = update.companyId?.name || 'N/A';
       const rawInput = `"${(update.rawInput || '').replace(/"/g, '""')}"`;
       const formattedOutput = `"${(update.formattedOutput || '').replace(/"/g, '""')}"`;
-      return `${date},${type},${rawInput},${formattedOutput}`;
+      return `${date},${type},${company},${rawInput},${formattedOutput}`;
     }).join('\n');
 
     const csv = csvHeader + csvRows;
@@ -63,18 +67,21 @@ export const exportAsCSV = async (req, res) => {
  */
 export const exportAsJSON = async (req, res) => {
   try {
-    const { startDate, endDate, type } = req.query;
+    const { startDate, endDate, type, companyId } = req.query;
 
     // Build query
     const query = { userId: req.user._id };
     if (type) query.type = type;
+    if (companyId) query.companyId = companyId;
     if (startDate || endDate) {
       query.date = {};
       if (startDate) query.date.$gte = new Date(startDate);
       if (endDate) query.date.$lte = new Date(endDate);
     }
 
-    const updates = await Update.find(query).sort({ date: -1 });
+    const updates = await Update.find(query)
+      .populate('companyId', 'name')
+      .sort({ date: -1 });
 
     if (updates.length === 0) {
       return res.status(404).json({
@@ -93,6 +100,7 @@ export const exportAsJSON = async (req, res) => {
       updates: updates.map(update => ({
         date: update.date || update.dateRange,
         type: update.type,
+        company: update.companyId?.name || null,
         rawInput: update.rawInput,
         formattedOutput: update.formattedOutput,
         sections: update.sections,
@@ -116,18 +124,21 @@ export const exportAsJSON = async (req, res) => {
  */
 export const exportAsMarkdown = async (req, res) => {
   try {
-    const { startDate, endDate, type } = req.query;
+    const { startDate, endDate, type, companyId } = req.query;
 
     // Build query
     const query = { userId: req.user._id };
     if (type) query.type = type;
+    if (companyId) query.companyId = companyId;
     if (startDate || endDate) {
       query.date = {};
       if (startDate) query.date.$gte = new Date(startDate);
       if (endDate) query.date.$lte = new Date(endDate);
     }
 
-    const updates = await Update.find(query).sort({ date: -1 });
+    const updates = await Update.find(query)
+      .populate('companyId', 'name')
+      .sort({ date: -1 });
 
     if (updates.length === 0) {
       return res.status(404).json({
@@ -148,6 +159,9 @@ export const exportAsMarkdown = async (req, res) => {
 
       markdown += `## ${date}\n\n`;
       markdown += `**Type:** ${update.type}\n\n`;
+      if (update.companyId?.name) {
+        markdown += `**Company:** ${update.companyId.name}\n\n`;
+      }
       markdown += `${update.formattedOutput}\n\n`;
       markdown += `---\n\n`;
     });
@@ -174,9 +188,10 @@ export const exportAsMarkdown = async (req, res) => {
  */
 export const getExportMetadata = async (req, res) => {
   try {
-    const { type } = req.query;
+    const { type, companyId } = req.query;
     const query = { userId: req.user._id };
     if (type) query.type = type;
+    if (companyId) query.companyId = companyId;
 
     const updates = await Update.find(query).sort({ date: -1 });
 

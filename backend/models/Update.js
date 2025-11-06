@@ -6,6 +6,12 @@ const updateSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: false,
+    index: true
+  },
   type: {
     type: String,
     enum: ['daily', 'weekly'],
@@ -64,6 +70,8 @@ updateSchema.pre('save', function(next) {
 // Create indexes for better query performance
 updateSchema.index({ userId: 1, type: 1, date: -1 });
 updateSchema.index({ userId: 1, createdAt: -1 });
+updateSchema.index({ userId: 1, companyId: 1, date: -1 });
+updateSchema.index({ companyId: 1, createdAt: -1 });
 
 const Update = mongoose.model('Update', updateSchema);
 

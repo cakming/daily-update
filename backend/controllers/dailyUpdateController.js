@@ -8,7 +8,7 @@ import { processDailyUpdate } from '../services/claudeService.js';
  */
 export const createDailyUpdate = async (req, res) => {
   try {
-    const { rawInput, date } = req.body;
+    const { rawInput, date, companyId } = req.body;
 
     if (!rawInput || !date) {
       return res.status(400).json({
@@ -17,17 +17,26 @@ export const createDailyUpdate = async (req, res) => {
       });
     }
 
-    // Check if update already exists for this date
-    const existingUpdate = await Update.findOne({
+    // Build query to check for existing update
+    const existingQuery = {
       userId: req.user._id,
       type: 'daily',
       date: new Date(date)
-    });
+    };
+
+    // Only check for same company if companyId is provided
+    if (companyId) {
+      existingQuery.companyId = companyId;
+    } else {
+      existingQuery.companyId = { $exists: false };
+    }
+
+    const existingUpdate = await Update.findOne(existingQuery);
 
     if (existingUpdate) {
       return res.status(400).json({
         success: false,
-        message: 'An update already exists for this date. Please use the update endpoint to modify it.'
+        message: 'An update already exists for this date and company. Please use the update endpoint to modify it.'
       });
     }
 
@@ -35,14 +44,21 @@ export const createDailyUpdate = async (req, res) => {
     const { formattedOutput, sections } = await processDailyUpdate(rawInput, date);
 
     // Create the update
-    const update = await Update.create({
+    const updateData = {
       userId: req.user._id,
       type: 'daily',
       date: new Date(date),
       rawInput,
       formattedOutput,
       sections
-    });
+    };
+
+    // Add companyId if provided
+    if (companyId) {
+      updateData.companyId = companyId;
+    }
+
+    const update = await Update.create(updateData);
 
     res.status(201).json({
       success: true,
@@ -65,12 +81,17 @@ export const createDailyUpdate = async (req, res) => {
  */
 export const getDailyUpdates = async (req, res) => {
   try {
-    const { startDate, endDate, search } = req.query;
+    const { startDate, endDate, search, companyId } = req.query;
 
     let query = {
       userId: req.user._id,
       type: 'daily'
     };
+
+    // Filter by company if provided
+    if (companyId) {
+      query.companyId = companyId;
+    }
 
     // Filter by date range if provided
     if (startDate || endDate) {
@@ -91,7 +112,9 @@ export const getDailyUpdates = async (req, res) => {
       ];
     }
 
-    const updates = await Update.find(query).sort({ date: -1 });
+    const updates = await Update.find(query)
+      .populate('companyId', 'name color')
+      .sort({ date: -1 });
 
     res.json({
       success: true,
