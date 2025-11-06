@@ -43,6 +43,10 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (resetToken, data) => api.put(`/auth/reset-password/${resetToken}`, data),
+  sendVerification: () => api.post('/auth/send-verification'),
+  verifyEmail: (verificationToken) => api.get(`/auth/verify-email/${verificationToken}`),
 };
 
 // Daily Updates APIs

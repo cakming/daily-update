@@ -21,15 +21,25 @@ import {
   TabPanel,
   FormControl,
   FormLabel,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+  useDisclosure,
+  Textarea,
 } from '@chakra-ui/react';
 import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 import ExportButton from '../components/ExportButton';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 const History = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [dailyUpdates, setDailyUpdates] = useState([]);
   const [weeklyUpdates, setWeeklyUpdates] = useState([]);
@@ -37,6 +47,11 @@ const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [companies, setCompanies] = useState([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [editingUpdate, setEditingUpdate] = useState(null);
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -44,7 +59,7 @@ const History = () => {
 
   useEffect(() => {
     fetchUpdates();
-  }, [selectedCompanyId]);
+  }, [selectedCompanyId, startDate, endDate]);
 
   const fetchCompanies = async () => {
     try {
@@ -58,7 +73,10 @@ const History = () => {
   const fetchUpdates = async () => {
     setLoading(true);
     try {
-      const params = selectedCompanyId ? { companyId: selectedCompanyId } : {};
+      const params = {};
+      if (selectedCompanyId) params.companyId = selectedCompanyId;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
 
       const [dailyResponse, weeklyResponse] = await Promise.all([
         dailyUpdateAPI.getAll(params),
@@ -121,6 +139,57 @@ const History = () => {
       duration: 2000,
       isClosable: true,
     });
+  };
+
+  const handleEdit = (update, type) => {
+    setEditingUpdate({ ...update, type });
+    setEditContent(update.rawInput);
+    onOpen();
+  };
+
+  const handleSave = async () => {
+    if (!editingUpdate) return;
+
+    setSaving(true);
+    try {
+      const { _id, type } = editingUpdate;
+
+      if (type === 'daily') {
+        await dailyUpdateAPI.update(_id, { rawInput: editContent });
+      } else {
+        await weeklyUpdateAPI.update(_id, { rawInput: editContent });
+      }
+
+      toast({
+        title: 'Update saved successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      fetchUpdates();
+      onClose();
+      setEditingUpdate(null);
+      setEditContent('');
+    } catch (error) {
+      console.error('Error saving update:', error);
+      toast({
+        title: 'Failed to save update',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCompanyId('');
+    setStartDate('');
+    setEndDate('');
   };
 
   const filterUpdates = (updates) => {
@@ -195,6 +264,14 @@ const History = () => {
               Copy
             </Button>
             <Button
+              onClick={() => handleEdit(update, type)}
+              colorScheme="teal"
+              variant="outline"
+              size="sm"
+            >
+              Edit
+            </Button>
+            <Button
               onClick={() => handleDelete(update._id, type)}
               colorScheme="red"
               variant="outline"
@@ -241,14 +318,47 @@ const History = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 size="lg"
               />
-              <FormControl>
-                <FormLabel fontSize="sm">Filter by Company</FormLabel>
-                <CompanySelector
-                  value={selectedCompanyId}
-                  onChange={setSelectedCompanyId}
-                  placeholder="All companies"
-                />
-              </FormControl>
+
+              <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+                <FormControl>
+                  <FormLabel fontSize="sm">Start Date</FormLabel>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm">End Date</FormLabel>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm">Filter by Company</FormLabel>
+                  <CompanySelector
+                    value={selectedCompanyId}
+                    onChange={setSelectedCompanyId}
+                    placeholder="All companies"
+                  />
+                </FormControl>
+              </SimpleGrid>
+
+              {(searchTerm || startDate || endDate || selectedCompanyId) && (
+                <Button
+                  onClick={clearFilters}
+                  variant="outline"
+                  size="sm"
+                  colorScheme="gray"
+                  alignSelf="flex-start"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </VStack>
           </Card.Root>
 
@@ -342,6 +452,44 @@ const History = () => {
           </Tabs.Root>
         </VStack>
       </Container>
+
+      {/* Edit Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            Edit Update
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack gap={4} align="stretch">
+              <Text fontSize="sm" color="gray.600">
+                Edit the raw input below. The update will be re-processed with AI when you save.
+              </Text>
+              <Textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={15}
+                placeholder="Enter your update content..."
+                fontFamily="monospace"
+              />
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="teal"
+              onClick={handleSave}
+              isLoading={saving}
+              loadingText="Saving..."
+            >
+              Save Changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

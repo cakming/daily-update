@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -130,6 +130,12 @@ const Login = () => {
                           placeholder="••••••••"
                         />
                       </FormControl>
+
+                      <Text fontSize="sm" alignSelf="flex-end">
+                        <Link to="/forgot-password" style={{ color: '#3182CE', textDecoration: 'underline' }}>
+                          Forgot Password?
+                        </Link>
+                      </Text>
 
                       <Button
                         type="submit"
