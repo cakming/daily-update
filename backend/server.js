@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import app from './app.js';
 import { startScheduler } from './services/scheduler.js';
+import { startTelegramBot } from './services/telegramBot.js';
 
 // Load environment variables
 dotenv.config();
@@ -11,6 +12,9 @@ connectDB();
 
 // Start scheduler service
 startScheduler();
+
+// Start Telegram bot
+startTelegramBot();
 
 // Start server
 const PORT = process.env.PORT || 5000;

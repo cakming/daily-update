@@ -54,6 +54,15 @@ const userSchema = new mongoose.Schema({
     type: [String],
     select: false
   },
+  telegramId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  googleChatWebhook: {
+    type: String,
+    select: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
