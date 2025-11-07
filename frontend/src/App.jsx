@@ -15,6 +15,7 @@ import Companies from './pages/Companies';
 import Analytics from './pages/Analytics';
 import Templates from './pages/Templates';
 import Tags from './pages/Tags';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -102,6 +103,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Tags />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

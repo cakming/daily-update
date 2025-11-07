@@ -145,4 +145,14 @@ export const bulkAPI = {
   export: (ids, format = 'json') => api.post('/bulk/export', { ids, format }),
 };
 
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  clearRead: () => api.delete('/notifications/clear-read'),
+  create: (data) => api.post('/notifications', data),
+};
+
 export default api;

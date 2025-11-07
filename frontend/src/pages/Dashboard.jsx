@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { useAuth } from '../context/AuthContext';
 import ColorModeToggle from '../components/ColorModeToggle';
+import NotificationBell from '../components/NotificationBell';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -67,6 +68,13 @@ const Dashboard = () => {
       color: 'cyan',
     },
     {
+      title: 'Notifications',
+      description: 'View and manage your notifications',
+      icon: '🔔',
+      action: () => navigate('/notifications'),
+      color: 'purple',
+    },
+    {
       title: 'View Analytics',
       description: 'Track your productivity and update trends',
       icon: '📈',
@@ -97,6 +105,7 @@ const Dashboard = () => {
               </Text>
             </VStack>
             <HStack>
+              <NotificationBell />
               <ColorModeToggle />
               <Button onClick={handleLogout} variant="outline" colorScheme="red">
                 Logout

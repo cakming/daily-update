@@ -9,6 +9,7 @@ import analyticsRoutes from './routes/analytics.js';
 import templateRoutes from './routes/templates.js';
 import tagRoutes from './routes/tags.js';
 import bulkRoutes from './routes/bulk.js';
+import notificationRoutes from './routes/notifications.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -52,6 +53,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/bulk', bulkRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
