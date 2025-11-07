@@ -221,6 +221,24 @@ const Profile = () => {
 
               <Box borderTopWidth="1px" pt={6} mt={4}>
                 <Heading size="md" mb={4}>
+                  Integrations
+                </Heading>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Connect your favorite communication tools
+                </Text>
+                <Button
+                  onClick={() => navigate('/integrations')}
+                  colorScheme="purple"
+                  variant="outline"
+                  w="full"
+                  mb={6}
+                >
+                  🔗 Manage Integrations (Telegram, Google Chat)
+                </Button>
+              </Box>
+
+              <Box borderTopWidth="1px" pt={6} mt={4}>
+                <Heading size="md" mb={4}>
                   Change Password (Optional)
                 </Heading>
                 <Text fontSize="sm" color="gray.600" mb={4}>

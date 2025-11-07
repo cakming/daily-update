@@ -19,6 +19,7 @@ import Notifications from './pages/Notifications';
 import Search from './pages/Search';
 import EmailSettings from './pages/EmailSettings';
 import Schedules from './pages/Schedules';
+import Integrations from './pages/Integrations';
 
 function App() {
   return (
@@ -138,6 +139,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Schedules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/integrations"
+            element={
+              <ProtectedRoute>
+                <Integrations />
               </ProtectedRoute>
             }
           />

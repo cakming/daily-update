@@ -103,6 +103,13 @@ const Dashboard = () => {
       color: 'yellow',
     },
     {
+      title: 'Integrations',
+      description: 'Connect Telegram, Google Chat, and more',
+      icon: '🔗',
+      action: () => navigate('/integrations'),
+      color: 'purple',
+    },
+    {
       title: 'Profile Settings',
       description: 'Manage your account and security settings',
       icon: '⚙️',

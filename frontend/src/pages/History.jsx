@@ -35,6 +35,7 @@ import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 import TagFilter from '../components/TagFilter';
 import ExportButton from '../components/ExportButton';
+import EmailModal from '../components/EmailModal';
 import { format, subDays } from 'date-fns';
 
 const History = () => {
@@ -54,6 +55,11 @@ const History = () => {
   const [editingUpdate, setEditingUpdate] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Email modal state
+  const { isOpen: isEmailModalOpen, onOpen: onEmailModalOpen, onClose: onEmailModalClose } = useDisclosure();
+  const [emailUpdate, setEmailUpdate] = useState(null);
+  const [emailUpdateType, setEmailUpdateType] = useState('daily');
 
   useEffect(() => {
     fetchCompanies();
@@ -196,6 +202,12 @@ const History = () => {
     setEndDate('');
   };
 
+  const handleEmail = (update, type) => {
+    setEmailUpdate(update);
+    setEmailUpdateType(type);
+    onEmailModalOpen();
+  };
+
   const filterUpdates = (updates) => {
     if (!searchTerm) return updates;
     return updates.filter(
@@ -266,6 +278,14 @@ const History = () => {
               flex={1}
             >
               Copy
+            </Button>
+            <Button
+              onClick={() => handleEmail(update, type)}
+              colorScheme="purple"
+              variant="outline"
+              size="sm"
+            >
+              Email
             </Button>
             <Button
               onClick={() => handleEdit(update, type)}
@@ -501,6 +521,14 @@ const History = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Email Modal */}
+      <EmailModal
+        isOpen={isEmailModalOpen}
+        onClose={onEmailModalClose}
+        update={emailUpdate}
+        updateType={emailUpdateType}
+      />
     </Box>
   );
 };
