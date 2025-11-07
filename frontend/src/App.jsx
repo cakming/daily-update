@@ -17,6 +17,7 @@ import Templates from './pages/Templates';
 import Tags from './pages/Tags';
 import Notifications from './pages/Notifications';
 import Search from './pages/Search';
+import EmailSettings from './pages/EmailSettings';
 
 function App() {
   return (
@@ -120,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Search />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/email-settings"
+            element={
+              <ProtectedRoute>
+                <EmailSettings />
               </ProtectedRoute>
             }
           />

@@ -89,6 +89,13 @@ const Dashboard = () => {
       color: 'teal',
     },
     {
+      title: 'Email Settings',
+      description: 'Configure email delivery and send test emails',
+      icon: '📧',
+      action: () => navigate('/email-settings'),
+      color: 'blue',
+    },
+    {
       title: 'Profile Settings',
       description: 'Manage your account and security settings',
       icon: '⚙️',

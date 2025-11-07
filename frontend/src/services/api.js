@@ -155,4 +155,11 @@ export const notificationAPI = {
   create: (data) => api.post('/notifications', data),
 };
 
+export const emailAPI = {
+  getConfigStatus: () => api.get('/email/config-status'),
+  sendTestEmail: (data) => api.post('/email/test', data),
+  sendDailyUpdate: (id, recipients) => api.post(`/email/daily/${id}`, { recipients }),
+  sendWeeklySummary: (id, recipients) => api.post(`/email/weekly/${id}`, { recipients }),
+};
+
 export default api;
