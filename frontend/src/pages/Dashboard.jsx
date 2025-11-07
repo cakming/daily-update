@@ -47,6 +47,13 @@ const Dashboard = () => {
       color: 'purple',
     },
     {
+      title: 'Advanced Search',
+      description: 'Search and filter your updates',
+      icon: '🔍',
+      action: () => navigate('/search'),
+      color: 'indigo',
+    },
+    {
       title: 'Manage Companies',
       description: 'Organize updates by company or client',
       icon: '🏢',

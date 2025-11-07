@@ -16,6 +16,7 @@ import Analytics from './pages/Analytics';
 import Templates from './pages/Templates';
 import Tags from './pages/Tags';
 import Notifications from './pages/Notifications';
+import Search from './pages/Search';
 
 function App() {
   return (
@@ -111,6 +112,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <Search />
               </ProtectedRoute>
             }
           />
