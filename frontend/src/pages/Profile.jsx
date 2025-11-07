@@ -203,6 +203,24 @@ const Profile = () => {
 
               <Box borderTopWidth="1px" pt={6} mt={4}>
                 <Heading size="md" mb={4}>
+                  Security Settings
+                </Heading>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Enhance your account security
+                </Text>
+                <Button
+                  onClick={() => navigate('/2fa-setup')}
+                  colorScheme="blue"
+                  variant="outline"
+                  w="full"
+                  mb={6}
+                >
+                  🔐 Manage Two-Factor Authentication
+                </Button>
+              </Box>
+
+              <Box borderTopWidth="1px" pt={6} mt={4}>
+                <Heading size="md" mb={4}>
                   Change Password (Optional)
                 </Heading>
                 <Text fontSize="sm" color="gray.600" mb={4}>

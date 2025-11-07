@@ -48,6 +48,11 @@ export const authAPI = {
   resetPassword: (resetToken, data) => api.put(`/auth/reset-password/${resetToken}`, data),
   sendVerification: () => api.post('/auth/send-verification'),
   verifyEmail: (verificationToken) => api.get(`/auth/verify-email/${verificationToken}`),
+  // 2FA APIs
+  get2FAStatus: () => api.get('/auth/2fa/status'),
+  setup2FA: () => api.post('/auth/2fa/setup'),
+  verify2FA: (data) => api.post('/auth/2fa/verify', data),
+  disable2FA: (data) => api.post('/auth/2fa/disable', data),
 };
 
 // Daily Updates APIs

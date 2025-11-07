@@ -28,6 +28,9 @@ const Login = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [require2FA, setRequire2FA] = useState(false);
+  const [twoFactorToken, setTwoFactorToken] = useState('');
+  const [useBackupCode, setUseBackupCode] = useState(false);
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -38,9 +41,14 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const result = await login(loginData.email, loginData.password);
+    const result = await login(
+      loginData.email,
+      loginData.password,
+      require2FA ? (useBackupCode ? null : twoFactorToken) : null,
+      require2FA && useBackupCode ? twoFactorToken : null
+    );
 
-    if (result.success) {
+    if (result.success && !result.require2FA) {
       toast({
         title: 'Login successful',
         status: 'success',
@@ -48,6 +56,15 @@ const Login = () => {
         isClosable: true,
       });
       navigate('/dashboard');
+    } else if (result.require2FA) {
+      setRequire2FA(true);
+      toast({
+        title: '2FA Required',
+        description: 'Please enter your authentication code',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
     } else {
       toast({
         title: 'Login failed',
@@ -116,6 +133,7 @@ const Login = () => {
                             setLoginData({ ...loginData, email: e.target.value })
                           }
                           placeholder="your@email.com"
+                          isDisabled={require2FA}
                         />
                       </FormControl>
 
@@ -128,14 +146,62 @@ const Login = () => {
                             setLoginData({ ...loginData, password: e.target.value })
                           }
                           placeholder="••••••••"
+                          isDisabled={require2FA}
                         />
                       </FormControl>
 
-                      <Text fontSize="sm" alignSelf="flex-end">
-                        <Link to="/forgot-password" style={{ color: '#3182CE', textDecoration: 'underline' }}>
-                          Forgot Password?
-                        </Link>
-                      </Text>
+                      {require2FA && (
+                        <Box w="full" bg="blue.50" p={4} borderRadius="md">
+                          <VStack gap={3} align="stretch">
+                            <Text fontSize="sm" fontWeight="bold" color="blue.800">
+                              🔐 Two-Factor Authentication Required
+                            </Text>
+                            <Text fontSize="sm" color="blue.700">
+                              {useBackupCode
+                                ? 'Enter one of your backup codes'
+                                : 'Enter the 6-digit code from your authenticator app'}
+                            </Text>
+                            <Input
+                              value={twoFactorToken}
+                              onChange={(e) => setTwoFactorToken(e.target.value.replace(/\D/g, '').slice(0, useBackupCode ? 8 : 6))}
+                              placeholder={useBackupCode ? 'XXXXXXXX' : '000000'}
+                              size="lg"
+                              textAlign="center"
+                              fontSize="xl"
+                              maxLength={useBackupCode ? 8 : 6}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setUseBackupCode(!useBackupCode);
+                                setTwoFactorToken('');
+                              }}
+                            >
+                              {useBackupCode ? 'Use authenticator app instead' : 'Use backup code instead'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setRequire2FA(false);
+                                setTwoFactorToken('');
+                                setUseBackupCode(false);
+                              }}
+                            >
+                              ← Back to login
+                            </Button>
+                          </VStack>
+                        </Box>
+                      )}
+
+                      {!require2FA && (
+                        <Text fontSize="sm" alignSelf="flex-end">
+                          <Link to="/forgot-password" style={{ color: '#3182CE', textDecoration: 'underline' }}>
+                            Forgot Password?
+                          </Link>
+                        </Text>
+                      )}
 
                       <Button
                         type="submit"
@@ -143,8 +209,9 @@ const Login = () => {
                         w="full"
                         loading={loading}
                         mt={4}
+                        isDisabled={require2FA && !twoFactorToken}
                       >
-                        Login
+                        {require2FA ? 'Verify & Login' : 'Login'}
                       </Button>
                     </VStack>
                   </form>

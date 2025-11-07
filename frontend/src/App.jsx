@@ -7,6 +7,7 @@ import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import TwoFactorSetup from './pages/TwoFactorSetup';
 import CreateDailyUpdate from './pages/CreateDailyUpdate';
 import CreateWeeklyUpdate from './pages/CreateWeeklyUpdate';
 import History from './pages/History';
@@ -85,6 +86,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/2fa-setup"
+            element={
+              <ProtectedRoute>
+                <TwoFactorSetup />
               </ProtectedRoute>
             }
           />

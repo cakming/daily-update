@@ -62,10 +62,10 @@ export const register = async (req, res) => {
  */
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorToken, backupCode } = req.body;
 
     // Check for user email
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +twoFactorEnabled +twoFactorSecret +twoFactorBackupCodes');
 
     if (!user) {
       return res.status(401).json({
@@ -84,12 +84,64 @@ export const login = async (req, res) => {
       });
     }
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // If no 2FA token or backup code provided, ask for it
+      if (!twoFactorToken && !backupCode) {
+        return res.json({
+          success: true,
+          require2FA: true,
+          message: 'Please provide your 2FA code from your authenticator app'
+        });
+      }
+
+      // Verify backup code if provided
+      if (backupCode) {
+        const backupCodeIndex = user.twoFactorBackupCodes.indexOf(backupCode.toUpperCase());
+
+        if (backupCodeIndex === -1) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid backup code'
+          });
+        }
+
+        // Remove used backup code
+        user.twoFactorBackupCodes.splice(backupCodeIndex, 1);
+        await user.save({ validateBeforeSave: false });
+
+        // Log warning if running low on backup codes
+        if (user.twoFactorBackupCodes.length < 3) {
+          console.warn(`User ${user.email} has only ${user.twoFactorBackupCodes.length} backup codes remaining`);
+        }
+      } else {
+        // Verify 2FA token
+        const speakeasy = (await import('speakeasy')).default;
+
+        const verified = speakeasy.totp.verify({
+          secret: user.twoFactorSecret,
+          encoding: 'base32',
+          token: twoFactorToken,
+          window: 2
+        });
+
+        if (!verified) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid 2FA code. Please try again or use a backup code.'
+          });
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: {
         _id: user._id,
         name: user.name,
         email: user.email,
+        emailVerified: user.emailVerified,
+        twoFactorEnabled: user.twoFactorEnabled,
         token: generateToken(user._id)
       }
     });

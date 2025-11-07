@@ -10,6 +10,12 @@ import {
   verifyEmail,
   updateProfile
 } from '../controllers/authController.js';
+import {
+  setup2FA,
+  verify2FA,
+  disable2FA,
+  get2FAStatus
+} from '../controllers/twoFactorController.js';
 import { protect } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
 
@@ -46,5 +52,11 @@ router.get('/verify-email/:verificationToken', verifyEmail);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.post('/send-verification', protect, authLimiter, sendVerification);
+
+// 2FA Routes (Protected)
+router.get('/2fa/status', protect, get2FAStatus);
+router.post('/2fa/setup', protect, authLimiter, setup2FA);
+router.post('/2fa/verify', protect, authLimiter, verify2FA);
+router.post('/2fa/disable', protect, authLimiter, disable2FA);
 
 export default router;
