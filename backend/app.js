@@ -11,6 +11,7 @@ import tagRoutes from './routes/tags.js';
 import bulkRoutes from './routes/bulk.js';
 import notificationRoutes from './routes/notifications.js';
 import emailRoutes from './routes/email.js';
+import scheduleRoutes from './routes/schedules.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -56,6 +57,7 @@ app.use('/api/tags', tagRoutes);
 app.use('/api/bulk', bulkRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/schedules', scheduleRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

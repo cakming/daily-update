@@ -162,4 +162,13 @@ export const emailAPI = {
   sendWeeklySummary: (id, recipients) => api.post(`/email/weekly/${id}`, { recipients }),
 };
 
+export const scheduleAPI = {
+  getAll: (params) => api.get('/schedules', { params }),
+  getById: (id) => api.get(`/schedules/${id}`),
+  create: (data) => api.post('/schedules', data),
+  update: (id, data) => api.put(`/schedules/${id}`, data),
+  delete: (id) => api.delete(`/schedules/${id}`),
+  toggle: (id) => api.post(`/schedules/${id}/toggle`),
+};
+
 export default api;

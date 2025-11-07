@@ -96,6 +96,13 @@ const Dashboard = () => {
       color: 'blue',
     },
     {
+      title: 'Scheduled Updates',
+      description: 'Automate update creation with schedules',
+      icon: '📅',
+      action: () => navigate('/schedules'),
+      color: 'yellow',
+    },
+    {
       title: 'Profile Settings',
       description: 'Manage your account and security settings',
       icon: '⚙️',

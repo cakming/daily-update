@@ -18,6 +18,7 @@ import Tags from './pages/Tags';
 import Notifications from './pages/Notifications';
 import Search from './pages/Search';
 import EmailSettings from './pages/EmailSettings';
+import Schedules from './pages/Schedules';
 
 function App() {
   return (
@@ -129,6 +130,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <EmailSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/schedules"
+            element={
+              <ProtectedRoute>
+                <Schedules />
               </ProtectedRoute>
             }
           />
