@@ -12,6 +12,10 @@ const updateSchema = new mongoose.Schema({
     required: false,
     index: true
   },
+  tags: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tag'
+  }],
   type: {
     type: String,
     enum: ['daily', 'weekly'],

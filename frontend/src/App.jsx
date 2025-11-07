@@ -6,12 +6,14 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import CreateDailyUpdate from './pages/CreateDailyUpdate';
 import CreateWeeklyUpdate from './pages/CreateWeeklyUpdate';
 import History from './pages/History';
 import Companies from './pages/Companies';
 import Analytics from './pages/Analytics';
 import Templates from './pages/Templates';
+import Tags from './pages/Tags';
 
 function App() {
   return (
@@ -75,6 +77,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Templates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tags"
+            element={
+              <ProtectedRoute>
+                <Tags />
               </ProtectedRoute>
             }
           />

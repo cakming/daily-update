@@ -43,6 +43,7 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/profile', data),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
   resetPassword: (resetToken, data) => api.put(`/auth/reset-password/${resetToken}`, data),
   sendVerification: () => api.post('/auth/send-verification'),
@@ -116,6 +117,27 @@ export const templateAPI = {
   delete: (id) => api.delete(`/templates/${id}`),
   use: (id) => api.post(`/templates/${id}/use`),
   getStats: () => api.get('/templates/stats'),
+};
+
+// Tag APIs
+export const tagAPI = {
+  create: (data) => api.post('/tags', data),
+  getAll: (params) => api.get('/tags', { params }),
+  getById: (id) => api.get(`/tags/${id}`),
+  update: (id, data) => api.put(`/tags/${id}`, data),
+  delete: (id, permanent = false) => api.delete(`/tags/${id}`, {
+    params: { permanent }
+  }),
+  getStats: () => api.get('/tags/stats'),
+};
+
+// Bulk APIs
+export const bulkAPI = {
+  delete: (ids) => api.post('/bulk/delete', { ids }),
+  assignTags: (updateIds, tagIds) => api.post('/bulk/assign-tags', { updateIds, tagIds }),
+  removeTags: (updateIds, tagIds) => api.post('/bulk/remove-tags', { updateIds, tagIds }),
+  assignCompany: (updateIds, companyId) => api.post('/bulk/assign-company', { updateIds, companyId }),
+  export: (ids, format = 'json') => api.post('/bulk/export', { ids, format }),
 };
 
 export default api;

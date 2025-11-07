@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { dailyUpdateAPI, templateAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
+import TagSelector from '../components/TagSelector';
 
 const CreateDailyUpdate = () => {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const CreateDailyUpdate = () => {
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [companyId, setCompanyId] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,6 +95,7 @@ const CreateDailyUpdate = () => {
         rawInput,
         date,
         companyId,
+        tags: selectedTags,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -134,6 +137,7 @@ const CreateDailyUpdate = () => {
     setSections(null);
     setDate(new Date().toISOString().split('T')[0]);
     setCompanyId(null);
+    setSelectedTags([]);
     setSelectedTemplate('');
   };
 
@@ -181,6 +185,17 @@ const CreateDailyUpdate = () => {
                   placeholder="Select company/client (optional)"
                 />
               </FormControl>
+            </VStack>
+          </Card.Root>
+
+          {/* Tag Selector */}
+          <Card.Root p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Tags</Heading>
+              <TagSelector
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
+              />
             </VStack>
           </Card.Root>
 

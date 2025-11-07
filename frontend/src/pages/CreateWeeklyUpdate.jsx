@@ -17,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { weeklyUpdateAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
+import TagSelector from '../components/TagSelector';
 
 const CreateWeeklyUpdate = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const CreateWeeklyUpdate = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [companyId, setCompanyId] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [sections, setSections] = useState(null);
@@ -62,6 +64,7 @@ const CreateWeeklyUpdate = () => {
         endDate,
         rawInput: rawInput || undefined,
         companyId,
+        tags: selectedTags,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -109,6 +112,7 @@ const CreateWeeklyUpdate = () => {
         formattedOutput,
         sections,
         companyId,
+        tags: selectedTags,
       });
 
       toast({
@@ -145,6 +149,7 @@ const CreateWeeklyUpdate = () => {
     setStartDate('');
     setEndDate('');
     setCompanyId(null);
+    setSelectedTags([]);
     setRawInput('');
     setFormattedOutput('');
     setSections(null);
@@ -214,6 +219,17 @@ const CreateWeeklyUpdate = () => {
                   placeholder="Select company/client (optional)"
                 />
               </FormControl>
+            </VStack>
+          </Card.Root>
+
+          {/* Tag Selector */}
+          <Card.Root p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Tags</Heading>
+              <TagSelector
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
+              />
             </VStack>
           </Card.Root>
 

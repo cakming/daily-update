@@ -60,11 +60,25 @@ const Dashboard = () => {
       color: 'pink',
     },
     {
+      title: 'Tags & Categories',
+      description: 'Organize your updates with custom tags',
+      icon: '🏷️',
+      action: () => navigate('/tags'),
+      color: 'cyan',
+    },
+    {
       title: 'View Analytics',
       description: 'Track your productivity and update trends',
       icon: '📈',
       action: () => navigate('/analytics'),
       color: 'teal',
+    },
+    {
+      title: 'Profile Settings',
+      description: 'Manage your account and security settings',
+      icon: '⚙️',
+      action: () => navigate('/profile'),
+      color: 'gray',
     },
   ];
 

@@ -7,7 +7,8 @@ import {
   forgotPassword,
   resetPassword,
   sendVerification,
-  verifyEmail
+  verifyEmail,
+  updateProfile
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
@@ -43,6 +44,7 @@ router.get('/verify-email/:verificationToken', verifyEmail);
 
 // Protected Routes
 router.get('/me', protect, getMe);
+router.put('/profile', protect, updateProfile);
 router.post('/send-verification', protect, authLimiter, sendVerification);
 
 export default router;

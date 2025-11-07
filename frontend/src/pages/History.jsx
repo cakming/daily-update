@@ -33,6 +33,7 @@ import {
 } from '@chakra-ui/react';
 import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
+import TagFilter from '../components/TagFilter';
 import ExportButton from '../components/ExportButton';
 import { format, subDays } from 'date-fns';
 
@@ -46,6 +47,7 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -59,7 +61,7 @@ const History = () => {
 
   useEffect(() => {
     fetchUpdates();
-  }, [selectedCompanyId, startDate, endDate]);
+  }, [selectedCompanyId, selectedTags, startDate, endDate]);
 
   const fetchCompanies = async () => {
     try {
@@ -75,6 +77,7 @@ const History = () => {
     try {
       const params = {};
       if (selectedCompanyId) params.companyId = selectedCompanyId;
+      if (selectedTags.length > 0) params.tags = selectedTags.join(',');
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
@@ -188,6 +191,7 @@ const History = () => {
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCompanyId('');
+    setSelectedTags([]);
     setStartDate('');
     setEndDate('');
   };
@@ -319,6 +323,13 @@ const History = () => {
                 size="lg"
               />
 
+              <HStack>
+                <TagFilter
+                  selectedTags={selectedTags}
+                  onChange={setSelectedTags}
+                />
+              </HStack>
+
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
                 <FormControl>
                   <FormLabel fontSize="sm">Start Date</FormLabel>
@@ -348,7 +359,7 @@ const History = () => {
                 </FormControl>
               </SimpleGrid>
 
-              {(searchTerm || startDate || endDate || selectedCompanyId) && (
+              {(searchTerm || startDate || endDate || selectedCompanyId || selectedTags.length > 0) && (
                 <Button
                   onClick={clearFilters}
                   variant="outline"
