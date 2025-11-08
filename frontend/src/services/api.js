@@ -138,7 +138,7 @@ export const tagAPI = {
 
 // Bulk APIs
 export const bulkAPI = {
-  delete: (ids) => api.post('/bulk/delete', { ids }),
+  bulkDelete: (data) => api.post('/bulk/delete', data),
   assignTags: (updateIds, tagIds) => api.post('/bulk/assign-tags', { updateIds, tagIds }),
   removeTags: (updateIds, tagIds) => api.post('/bulk/remove-tags', { updateIds, tagIds }),
   assignCompany: (updateIds, companyId) => api.post('/bulk/assign-company', { updateIds, companyId }),
@@ -178,6 +178,22 @@ export const scheduleHistoryAPI = {
   getStatistics: (params) => api.get('/schedule-history/stats', { params }),
   delete: (id) => api.delete(`/schedule-history/${id}`),
   deleteBySchedule: (scheduleId) => api.delete(`/schedule-history/schedule/${scheduleId}`),
+};
+
+// Team APIs
+export const teamAPI = {
+  create: (data) => api.post('/teams', data),
+  getAll: (params) => api.get('/teams', { params }),
+  getById: (id) => api.get(`/teams/${id}`),
+  update: (id, data) => api.put(`/teams/${id}`, data),
+  delete: (id) => api.delete(`/teams/${id}`),
+  // Member management
+  addMember: (id, data) => api.post(`/teams/${id}/members`, data),
+  removeMember: (id, userId) => api.delete(`/teams/${id}/members/${userId}`),
+  updateMemberRole: (id, userId, data) => api.put(`/teams/${id}/members/${userId}`, data),
+  // Team data
+  getUpdates: (id, params) => api.get(`/teams/${id}/updates`, { params }),
+  getStats: (id) => api.get(`/teams/${id}/stats`),
 };
 
 export default api;

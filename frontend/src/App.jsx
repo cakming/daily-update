@@ -27,6 +27,7 @@ const EmailSettings = lazy(() => import('./pages/EmailSettings'));
 const Schedules = lazy(() => import('./pages/Schedules'));
 const ScheduleHistory = lazy(() => import('./pages/ScheduleHistory'));
 const Integrations = lazy(() => import('./pages/Integrations'));
+const Teams = lazy(() => import('./pages/Teams'));
 
 function App() {
   return (
@@ -163,6 +164,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Integrations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teams"
+            element={
+              <ProtectedRoute>
+                <Teams />
               </ProtectedRoute>
             }
           />

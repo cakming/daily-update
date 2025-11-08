@@ -15,6 +15,7 @@ import scheduleRoutes from './routes/schedules.js';
 import scheduleHistoryRoutes from './routes/scheduleHistory.js';
 import integrationRoutes from './routes/integrations.js';
 import notificationPreferenceRoutes from './routes/notificationPreferences.js';
+import teamRoutes from './routes/teams.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -64,6 +65,7 @@ app.use('/api/email', emailRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/schedule-history', scheduleHistoryRoutes);
 app.use('/api/integrations', integrationRoutes);
+app.use('/api/teams', teamRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
