@@ -171,4 +171,13 @@ export const scheduleAPI = {
   toggle: (id) => api.post(`/schedules/${id}/toggle`),
 };
 
+export const scheduleHistoryAPI = {
+  getAll: (params) => api.get('/schedule-history', { params }),
+  getById: (id) => api.get(`/schedule-history/${id}`),
+  getBySchedule: (scheduleId, params) => api.get(`/schedule-history/schedule/${scheduleId}`, { params }),
+  getStatistics: (params) => api.get('/schedule-history/stats', { params }),
+  delete: (id) => api.delete(`/schedule-history/${id}`),
+  deleteBySchedule: (scheduleId) => api.delete(`/schedule-history/schedule/${scheduleId}`),
+};
+
 export default api;

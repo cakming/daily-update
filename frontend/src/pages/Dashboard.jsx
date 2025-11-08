@@ -103,6 +103,13 @@ const Dashboard = () => {
       color: 'yellow',
     },
     {
+      title: 'Schedule History',
+      description: 'Monitor schedule execution history and statistics',
+      icon: '📊',
+      action: () => navigate('/schedule-history'),
+      color: 'cyan',
+    },
+    {
       title: 'Integrations',
       description: 'Connect Telegram, Google Chat, and more',
       icon: '🔗',

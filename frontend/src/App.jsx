@@ -19,6 +19,7 @@ import Notifications from './pages/Notifications';
 import Search from './pages/Search';
 import EmailSettings from './pages/EmailSettings';
 import Schedules from './pages/Schedules';
+import ScheduleHistory from './pages/ScheduleHistory';
 import Integrations from './pages/Integrations';
 
 function App() {
@@ -139,6 +140,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Schedules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/schedule-history"
+            element={
+              <ProtectedRoute>
+                <ScheduleHistory />
               </ProtectedRoute>
             }
           />
