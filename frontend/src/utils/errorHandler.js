@@ -120,72 +120,65 @@ export const getErrorTitle = (error) => {
 
 /**
  * Show error toast with user-friendly message
- * @param {Object} toast - Chakra UI toast instance
  * @param {Error|Object} error - Error object
  * @param {string} customMessage - Optional custom message
  */
-export const showErrorToast = (toast, error, customMessage = null) => {
+export const showErrorToast = (error, customMessage = null) => {
   const title = getErrorTitle(error);
   const description = customMessage || getErrorMessage(error);
 
-  toast({
-    title,
-    description,
-    status: 'error',
-    duration: 5000,
-    isClosable: true,
-    position: 'top-right',
+  // Import toaster dynamically to avoid circular dependencies
+  import('../services/toaster').then(({ toaster }) => {
+    toaster.error({
+      title,
+      description,
+      duration: 5000,
+    });
   });
 };
 
 /**
  * Show success toast
- * @param {Object} toast - Chakra UI toast instance
  * @param {string} title - Toast title
  * @param {string} description - Toast description
  */
-export const showSuccessToast = (toast, title, description = '') => {
-  toast({
-    title,
-    description,
-    status: 'success',
-    duration: 3000,
-    isClosable: true,
-    position: 'top-right',
+export const showSuccessToast = (title, description = '') => {
+  import('../services/toaster').then(({ toaster }) => {
+    toaster.success({
+      title,
+      description,
+      duration: 3000,
+    });
   });
 };
 
 /**
  * Show warning toast
- * @param {Object} toast - Chakra UI toast instance
  * @param {string} title - Toast title
  * @param {string} description - Toast description
  */
-export const showWarningToast = (toast, title, description = '') => {
-  toast({
-    title,
-    description,
-    status: 'warning',
-    duration: 4000,
-    isClosable: true,
-    position: 'top-right',
+export const showWarningToast = (title, description = '') => {
+  import('../services/toaster').then(({ toaster }) => {
+    toaster.warning({
+      title,
+      description,
+      duration: 4000,
+    });
   });
 };
 
 /**
  * Show info toast
- * @param {Object} toast - Chakra UI toast instance
  * @param {string} title - Toast title
  * @param {string} description - Toast description
  */
-export const showInfoToast = (toast, title, description = '') => {
-  toast({
-    title,
-    description,
-    status: 'info',
-    duration: 4000,
-    isClosable: true,
-    position: 'top-right',
+export const showInfoToast = (title, description = '') => {
+  import('../services/toaster').then(({ toaster }) => {
+    toaster.info({
+      title,
+      description,
+      duration: 4000,
+    });
   });
 };
 
@@ -222,11 +215,10 @@ export const getValidationErrors = (error) => {
 /**
  * Handle API error with consistent error handling
  * @param {Error} error - Error object
- * @param {Object} toast - Chakra UI toast instance
  * @param {string} defaultMessage - Default error message if none available
  * @returns {Object} Processed error information
  */
-export const handleApiError = (error, toast, defaultMessage = 'An error occurred') => {
+export const handleApiError = (error, defaultMessage = 'An error occurred') => {
   console.error('API Error:', error);
 
   const errorInfo = {
@@ -237,7 +229,7 @@ export const handleApiError = (error, toast, defaultMessage = 'An error occurred
   };
 
   // Show toast notification
-  showErrorToast(toast, error, defaultMessage);
+  showErrorToast(error, defaultMessage);
 
   return errorInfo;
 };

@@ -11,7 +11,7 @@ import {
   Text,
   Input,
   Badge,
-  useToast,
+  
   Modal,
   ModalOverlay,
   ModalContent,
@@ -23,6 +23,7 @@ import {
   FormLabel,
   useDisclosure,
   SimpleGrid,
+  useToast,
 } from '@chakra-ui/react';
 import { companyAPI } from '../services/api';
 
