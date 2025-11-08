@@ -1,32 +1,39 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { PageLoader } from './components/LoadingStates';
+
+// Eager load authentication pages for faster initial load
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
-import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import TwoFactorSetup from './pages/TwoFactorSetup';
-import CreateDailyUpdate from './pages/CreateDailyUpdate';
-import CreateWeeklyUpdate from './pages/CreateWeeklyUpdate';
-import History from './pages/History';
-import Companies from './pages/Companies';
-import Analytics from './pages/Analytics';
-import Templates from './pages/Templates';
-import Tags from './pages/Tags';
-import Notifications from './pages/Notifications';
-import Search from './pages/Search';
-import EmailSettings from './pages/EmailSettings';
-import Schedules from './pages/Schedules';
-import ScheduleHistory from './pages/ScheduleHistory';
-import Integrations from './pages/Integrations';
+
+// Lazy load other pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const TwoFactorSetup = lazy(() => import('./pages/TwoFactorSetup'));
+const CreateDailyUpdate = lazy(() => import('./pages/CreateDailyUpdate'));
+const CreateWeeklyUpdate = lazy(() => import('./pages/CreateWeeklyUpdate'));
+const History = lazy(() => import('./pages/History'));
+const Companies = lazy(() => import('./pages/Companies'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Templates = lazy(() => import('./pages/Templates'));
+const Tags = lazy(() => import('./pages/Tags'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Search = lazy(() => import('./pages/Search'));
+const EmailSettings = lazy(() => import('./pages/EmailSettings'));
+const Schedules = lazy(() => import('./pages/Schedules'));
+const ScheduleHistory = lazy(() => import('./pages/ScheduleHistory'));
+const Integrations = lazy(() => import('./pages/Integrations'));
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
@@ -161,7 +168,8 @@ function App() {
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </Router>
     </AuthProvider>
   );
