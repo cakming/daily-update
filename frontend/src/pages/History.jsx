@@ -11,7 +11,7 @@ import {
   Text,
   Input,
   Badge,
-  
+  Checkbox,
   SimpleGrid,
   IconButton,
   Tabs,
@@ -36,6 +36,7 @@ import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 import TagFilter from '../components/TagFilter';
 import ExportButton from '../components/ExportButton';
+import BulkOperations from '../components/BulkOperations';
 import EmailModal from '../components/EmailModal';
 import { format, subDays } from 'date-fns';
 
@@ -62,6 +63,10 @@ const History = () => {
   const [emailUpdate, setEmailUpdate] = useState(null);
   const [emailUpdateType, setEmailUpdateType] = useState('daily');
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [activeTab, setActiveTab] = useState(0); // 0 for daily, 1 for weekly
+
   useEffect(() => {
     fetchCompanies();
   }, []);
@@ -69,6 +74,11 @@ const History = () => {
   useEffect(() => {
     fetchUpdates();
   }, [selectedCompanyId, selectedTags, startDate, endDate]);
+
+  // Clear bulk selection when switching tabs
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeTab]);
 
   const fetchCompanies = async () => {
     try {
@@ -203,6 +213,33 @@ const History = () => {
     setEndDate('');
   };
 
+  // Bulk selection handlers
+  const handleSelectUpdate = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id)
+        ? prev.filter(selectedId => selectedId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (updates) => {
+    const allIds = updates.map(update => update._id);
+    if (selectedIds.length === allIds.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allIds);
+    }
+  };
+
+  const clearBulkSelection = () => {
+    setSelectedIds([]);
+  };
+
+  const handleBulkSuccess = () => {
+    clearBulkSelection();
+    fetchUpdates();
+  };
+
   const handleEmail = (update, type) => {
     setEmailUpdate(update);
     setEmailUpdateType(type);
@@ -228,16 +265,23 @@ const History = () => {
       : `${format(new Date(update.dateRange.start), 'MMM dd')} - ${format(new Date(update.dateRange.end), 'MMM dd, yyyy')}`;
 
     const company = update.companyId ? getCompanyById(update.companyId) : null;
+    const isSelected = selectedIds.includes(update._id);
 
     return (
-      <Card.Root p={6}>
+      <Card p={6} borderWidth="2px" borderColor={isSelected ? 'purple.500' : 'transparent'}>
         <VStack align="start" gap={4}>
           <HStack justify="space-between" w="full">
-            <VStack align="start" gap={1}>
-              <HStack>
-                <Badge colorScheme={type === 'daily' ? 'blue' : 'green'}>
-                  {type === 'daily' ? 'Daily' : 'Weekly'}
-                </Badge>
+            <HStack gap={3}>
+              <Checkbox
+                isChecked={isSelected}
+                onChange={() => handleSelectUpdate(update._id)}
+                colorScheme="purple"
+              />
+              <VStack align="start" gap={1}>
+                <HStack>
+                  <Badge colorScheme={type === 'daily' ? 'blue' : 'green'}>
+                    {type === 'daily' ? 'Daily' : 'Weekly'}
+                  </Badge>
                 {company && (
                   <Badge
                     bg={company.color}
@@ -255,6 +299,7 @@ const History = () => {
                 Created {format(new Date(update.createdAt), 'MMM dd, yyyy h:mm a')}
               </Text>
             </VStack>
+            </HStack>
           </HStack>
 
           <Box
@@ -306,7 +351,7 @@ const History = () => {
             </Button>
           </HStack>
         </VStack>
-      </Card.Root>
+      </Card>
     );
   };
 
@@ -320,6 +365,11 @@ const History = () => {
               Update History
             </Heading>
             <HStack gap={2}>
+              <BulkOperations
+                selectedIds={selectedIds}
+                updateType={activeTab === 0 ? 'daily' : 'weekly'}
+                onSuccess={handleBulkSuccess}
+              />
               <ExportButton
                 filters={selectedCompanyId ? { companyId: selectedCompanyId } : {}}
               />
@@ -335,7 +385,7 @@ const History = () => {
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
           {/* Search and Filters */}
-          <Card.Root p={4}>
+          <Card p={4}>
             <VStack gap={4} align="stretch">
               <Input
                 placeholder="Search updates..."
@@ -392,11 +442,11 @@ const History = () => {
                 </Button>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Stats */}
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            <Card.Root p={4} bg="blue.50" borderColor="blue.200" borderWidth="1px">
+            <Card p={4} bg="blue.50" borderColor="blue.200" borderWidth="1px">
               <VStack align="start">
                 <Text fontSize="sm" color="blue.600" fontWeight="medium">
                   Daily Updates
@@ -405,9 +455,9 @@ const History = () => {
                   {filterUpdates(dailyUpdates).length}
                 </Heading>
               </VStack>
-            </Card.Root>
+            </Card>
 
-            <Card.Root p={4} bg="green.50" borderColor="green.200" borderWidth="1px">
+            <Card p={4} bg="green.50" borderColor="green.200" borderWidth="1px">
               <VStack align="start">
                 <Text fontSize="sm" color="green.600" fontWeight="medium">
                   Weekly Summaries
@@ -416,26 +466,39 @@ const History = () => {
                   {filterUpdates(weeklyUpdates).length}
                 </Heading>
               </VStack>
-            </Card.Root>
+            </Card>
           </SimpleGrid>
 
           {/* Updates List */}
-          <Tabs.Root defaultValue="daily">
-            <TabList>
-              <Tabs.Trigger value="daily">
-                Daily Updates ({filterUpdates(dailyUpdates).length})
-              </Tabs.Trigger>
-              <Tabs.Trigger value="weekly">
-                Weekly Summaries ({filterUpdates(weeklyUpdates).length})
-              </Tabs.Trigger>
-            </TabList>
+          <Tabs index={activeTab} onChange={setActiveTab}>
+            <HStack justify="space-between" mb={4}>
+              <TabList>
+                <Tab>
+                  Daily Updates ({filterUpdates(dailyUpdates).length})
+                </Tab>
+                <Tab>
+                  Weekly Summaries ({filterUpdates(weeklyUpdates).length})
+                </Tab>
+              </TabList>
+
+              {/* Select All Checkbox */}
+              {(activeTab === 0 ? filterUpdates(dailyUpdates).length : filterUpdates(weeklyUpdates).length) > 0 && (
+                <Checkbox
+                  isChecked={selectedIds.length > 0}
+                  onChange={() => handleSelectAll(activeTab === 0 ? filterUpdates(dailyUpdates) : filterUpdates(weeklyUpdates))}
+                  colorScheme="purple"
+                >
+                  Select All ({selectedIds.length})
+                </Checkbox>
+              )}
+            </HStack>
 
             <TabPanels>
-              <TabPanel value="daily">
+              <TabPanel>
                 {loading ? (
                   <Text>Loading...</Text>
                 ) : filterUpdates(dailyUpdates).length === 0 ? (
-                  <Card.Root p={8}>
+                  <Card p={8}>
                     <VStack>
                       <Text color="gray.500">No daily updates found</Text>
                       <Button
@@ -446,7 +509,7 @@ const History = () => {
                         Create Your First Daily Update
                       </Button>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 ) : (
                   <VStack gap={4} align="stretch" mt={4}>
                     {filterUpdates(dailyUpdates).map((update) => (
@@ -456,11 +519,11 @@ const History = () => {
                 )}
               </TabPanel>
 
-              <TabPanel value="weekly">
+              <TabPanel>
                 {loading ? (
                   <Text>Loading...</Text>
                 ) : filterUpdates(weeklyUpdates).length === 0 ? (
-                  <Card.Root p={8}>
+                  <Card p={8}>
                     <VStack>
                       <Text color="gray.500">No weekly summaries found</Text>
                       <Button
@@ -471,7 +534,7 @@ const History = () => {
                         Generate Your First Weekly Summary
                       </Button>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 ) : (
                   <VStack gap={4} align="stretch" mt={4}>
                     {filterUpdates(weeklyUpdates).map((update) => (
@@ -481,7 +544,7 @@ const History = () => {
                 )}
               </TabPanel>
             </TabPanels>
-          </Tabs.Root>
+          </Tabs>
         </VStack>
       </Container>
 
