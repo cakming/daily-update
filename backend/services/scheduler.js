@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import ScheduledUpdate from '../models/ScheduledUpdate.js';
+import ScheduleHistory from '../models/ScheduleHistory.js';
 import DailyUpdate from '../models/DailyUpdate.js';
 import WeeklyUpdate from '../models/WeeklyUpdate.js';
 import User from '../models/User.js';
@@ -46,10 +47,15 @@ const processScheduledUpdates = async () => {
  * Execute a single scheduled update
  */
 const executeScheduledUpdate = async (scheduled) => {
+  const startTime = Date.now();
+  let historyEntry = null;
+  let createdUpdate = null;
+  let emailSent = false;
+  let status = 'success';
+  let error = null;
+
   try {
     console.log(`Executing scheduled update ${scheduled._id} (${scheduled.type})`);
-
-    let createdUpdate = null;
 
     if (scheduled.type === 'daily') {
       // Create daily update
@@ -96,7 +102,13 @@ const executeScheduledUpdate = async (scheduled) => {
 
     // Send email if enabled
     if (scheduled.sendEmail && scheduled.recipients && scheduled.recipients.length > 0 && createdUpdate) {
-      await sendScheduledEmail(scheduled, createdUpdate);
+      try {
+        await sendScheduledEmail(scheduled, createdUpdate);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('Failed to send scheduled email:', emailError);
+        status = 'partial'; // Update created but email failed
+      }
     }
 
     // Update schedule
@@ -113,9 +125,42 @@ const executeScheduledUpdate = async (scheduled) => {
     await scheduled.save();
 
     console.log(`Scheduled update ${scheduled._id} executed successfully`);
-  } catch (error) {
-    console.error(`Error executing scheduled update ${scheduled._id}:`, error);
-    throw error;
+  } catch (err) {
+    console.error(`Error executing scheduled update ${scheduled._id}:`, err);
+    status = 'failed';
+    error = {
+      message: err.message,
+      stack: err.stack,
+    };
+  } finally {
+    // Log execution to history
+    const executionTime = Date.now() - startTime;
+
+    historyEntry = new ScheduleHistory({
+      scheduleId: scheduled._id,
+      userId: scheduled.userId,
+      executedAt: new Date(),
+      status,
+      updateType: scheduled.type,
+      createdUpdateId: createdUpdate?._id,
+      updateModel: scheduled.type === 'daily' ? 'DailyUpdate' : 'WeeklyUpdate',
+      emailSent,
+      emailRecipients: scheduled.sendEmail ? scheduled.recipients : [],
+      executionTimeMs: executionTime,
+      error,
+      metadata: {
+        scheduleType: scheduled.scheduleType,
+        companyId: scheduled.company?._id,
+        tagsCount: scheduled.tags?.length || 0,
+        contentLength: scheduled.content?.length || 0,
+      },
+    });
+
+    await historyEntry.save();
+
+    if (status === 'failed') {
+      throw new Error(error.message);
+    }
   }
 };
 

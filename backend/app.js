@@ -12,6 +12,7 @@ import bulkRoutes from './routes/bulk.js';
 import notificationRoutes from './routes/notifications.js';
 import emailRoutes from './routes/email.js';
 import scheduleRoutes from './routes/schedules.js';
+import scheduleHistoryRoutes from './routes/scheduleHistory.js';
 import integrationRoutes from './routes/integrations.js';
 import notificationPreferenceRoutes from './routes/notificationPreferences.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
@@ -61,6 +62,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/notification-preferences', notificationPreferenceRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/schedule-history', scheduleHistoryRoutes);
 app.use('/api/integrations', integrationRoutes);
 
 // Health check endpoint
