@@ -1,414 +1,329 @@
 # Deployment Scripts
 
-Automated deployment and maintenance scripts for the Daily Update App.
+This directory contains automation scripts for deploying and managing the Daily Update application.
 
-## 📜 Available Scripts
+## Scripts Overview
 
-### 🚀 Deployment Scripts
-
-#### `deploy-all.sh` - Full Stack Deployment
-Complete deployment orchestrator with pre-flight checks and multiple deployment options.
-
-**Usage:**
-```bash
-./scripts/deploy-all.sh                # Interactive deployment
-./scripts/deploy-all.sh --docker       # Docker Compose deployment
-./scripts/deploy-all.sh --cloud        # Cloud deployment (Railway + Vercel)
-./scripts/deploy-all.sh --skip-tests   # Skip test execution
-```
-
-**Features:**
-- Pre-deployment checks (branch, uncommitted changes)
-- Automated test execution
-- Multiple deployment targets
-- Post-deployment verification
-- Rollback support
-
----
-
-#### `deploy-docker.sh` - Docker Deployment
-Deploy using Docker Compose for local or server deployment.
-
-**Usage:**
-```bash
-./scripts/deploy-docker.sh              # Normal deployment
-./scripts/deploy-docker.sh --rebuild    # Force rebuild images
-./scripts/deploy-docker.sh --down       # Stop services
-./scripts/deploy-docker.sh --clean      # Stop and remove all data
-./scripts/deploy-docker.sh --logs       # View logs
-```
-
-**Requirements:**
-- Docker 20.10+
-- Docker Compose 2.0+
-- `.env` file configured
+### 1. setup-server.sh
+**Purpose:** Initial server setup and configuration
 
 **What it does:**
-1. Checks requirements (Docker, Docker Compose, .env)
-2. Validates environment variables
-3. Builds Docker images
-4. Starts all services
-5. Performs health checks
-6. Displays service status
-
----
-
-#### `deploy-railway.sh` - Railway Backend Deployment
-Deploy backend to Railway.app.
+- Updates system packages
+- Installs Node.js, MongoDB, PM2, Nginx, and Certbot
+- Configures firewall (UFW)
+- Creates necessary directories
+- Sets up PM2 startup
 
 **Usage:**
 ```bash
-export JWT_SECRET="your-secret"
-export ANTHROPIC_API_KEY="your-key"
-export CLIENT_URL="https://your-frontend.com"
-
-./scripts/deploy-railway.sh
+chmod +x scripts/setup-server.sh
+./scripts/setup-server.sh
 ```
 
-**Requirements:**
-- Railway CLI or RAILWAY_TOKEN
-- Required environment variables set
+**When to use:** Run once on a fresh Ubuntu server before first deployment
+
+---
+
+### 2. deploy.sh
+**Purpose:** Deploy or update the application
 
 **What it does:**
-1. Installs/checks Railway CLI
-2. Authenticates with Railway
-3. Sets environment variables
-4. Deploys backend
-5. Displays deployment URL
-
----
-
-#### `deploy-vercel.sh` - Vercel Frontend Deployment
-Deploy frontend to Vercel.
+- Clones repository (initial deployment) or pulls latest changes
+- Installs backend dependencies
+- Builds frontend
+- Restarts application with PM2
+- Reloads Nginx
+- Performs health check
 
 **Usage:**
 ```bash
-export VITE_API_URL="https://your-backend.com/api"
+# Deploy from main branch
+./scripts/deploy.sh
 
-./scripts/deploy-vercel.sh                              # Production deployment
-./scripts/deploy-vercel.sh --staging                    # Staging deployment
-./scripts/deploy-vercel.sh --api-url <url>             # Specify API URL
+# Deploy from specific branch
+./scripts/deploy.sh develop
 ```
 
-**Requirements:**
-- Vercel CLI or VERCEL_TOKEN
-- Backend API URL
+**When to use:** 
+- Initial deployment after server setup
+- Every time you want to update to the latest code
+
+---
+
+### 3. backup-database.sh
+**Purpose:** Backup MongoDB database
 
 **What it does:**
-1. Installs/checks Vercel CLI
-2. Authenticates with Vercel
-3. Builds frontend with API URL
-4. Deploys to production/staging
-5. Configures environment variables
-
----
-
-### 🔧 Maintenance Scripts
-
-#### `backup-database.sh` - MongoDB Backup
-Create and restore MongoDB backups.
+- Creates MongoDB dump
+- Compresses backup
+- Removes backups older than 30 days
+- Optionally uploads to cloud storage (S3, GCS)
 
 **Usage:**
 ```bash
-./scripts/backup-database.sh                    # Create backup
-./scripts/backup-database.sh restore <file>     # Restore from backup
-./scripts/backup-database.sh list               # List backups
-./scripts/backup-database.sh clean              # Remove old backups
+./scripts/backup-database.sh
 ```
 
-**Features:**
-- Automatic backup compression
-- Docker and production MongoDB support
-- Keeps last 7 backups automatically
-- Restore functionality with confirmation
+**Automation:**
+Schedule daily backups with cron:
+```bash
+crontab -e
 
-**Backup location:** `./backups/`
+# Add this line for daily backup at 2 AM:
+0 2 * * * /var/www/daily-update/scripts/backup-database.sh >> /var/log/daily-update/backup.log 2>&1
+```
+
+**When to use:**
+- Before major updates
+- Automated daily backups
+- Before database schema changes
 
 ---
 
-#### `health-check.sh` - Service Health Check
-Verify all services are running correctly.
+### 4. restore-database.sh
+**Purpose:** Restore database from backup
+
+**What it does:**
+- Lists available backups
+- Creates safety backup before restore
+- Drops existing database
+- Restores selected backup
+- Restarts application
+- Verifies health
 
 **Usage:**
 ```bash
-./scripts/health-check.sh              # Basic health check
-./scripts/health-check.sh --detailed   # Detailed check with logs
+./scripts/restore-database.sh
 ```
 
-**Checks:**
-- ✅ Backend API health endpoint
-- ✅ Frontend accessibility
-- ✅ MongoDB connectivity
-- ✅ Docker services status
-- ✅ Environment configuration
-
-**Exit codes:**
-- `0` - All services healthy
-- `1` - Some services unhealthy
-- `2` - Cannot determine status
+**When to use:**
+- Disaster recovery
+- Rolling back after failed updates
+- Moving data between environments
 
 ---
 
-## 🛠️ Setup
+### 5. health-check.sh
+**Purpose:** Monitor application health and auto-recover
 
-### 1. Make scripts executable
+**What it does:**
+- Checks MongoDB status
+- Checks PM2 process status
+- Checks API health endpoint
+- Automatically restarts if unhealthy
+- Retries up to 3 times
+
+**Usage:**
+```bash
+./scripts/health-check.sh
+```
+
+**Automation:**
+Schedule regular health checks with cron:
+```bash
+crontab -e
+
+# Add this line for health check every 5 minutes:
+*/5 * * * * /var/www/daily-update/scripts/health-check.sh >> /var/log/daily-update/health-check.log 2>&1
+```
+
+**When to use:**
+- Automated monitoring (via cron)
+- Manual health verification
+- Troubleshooting issues
+
+---
+
+## Complete Deployment Workflow
+
+### First-Time Deployment
+
+1. **Setup Server**
+   ```bash
+   ./scripts/setup-server.sh
+   ```
+
+2. **Clone Repository**
+   ```bash
+   cd /var/www
+   git clone https://github.com/yourusername/daily-update.git
+   cd daily-update
+   ```
+
+3. **Configure Environment**
+   ```bash
+   # Backend
+   cp backend/.env.example backend/.env
+   nano backend/.env
+   
+   # Frontend
+   nano frontend/.env.production
+   ```
+
+4. **Deploy Application**
+   ```bash
+   ./scripts/deploy.sh
+   ```
+
+5. **Setup SSL**
+   ```bash
+   sudo certbot --nginx -d yourdomain.com -d api.yourdomain.com
+   ```
+
+6. **Setup Automated Backups**
+   ```bash
+   crontab -e
+   # Add: 0 2 * * * /var/www/daily-update/scripts/backup-database.sh >> /var/log/daily-update/backup.log 2>&1
+   ```
+
+7. **Setup Health Monitoring**
+   ```bash
+   crontab -e
+   # Add: */5 * * * * /var/www/daily-update/scripts/health-check.sh >> /var/log/daily-update/health-check.log 2>&1
+   ```
+
+---
+
+### Update Deployment
+
+```bash
+cd /var/www/daily-update
+./scripts/deploy.sh
+```
+
+---
+
+### Backup & Restore
+
+**Create backup:**
+```bash
+./scripts/backup-database.sh
+```
+
+**Restore from backup:**
+```bash
+./scripts/restore-database.sh
+```
+
+---
+
+## Environment Variables Required
+
+### Backend (.env)
+```bash
+NODE_ENV=production
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/daily-update
+JWT_SECRET=your-secret-key
+JWT_EXPIRE=30d
+CLIENT_URL=https://yourdomain.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-password
+OPENAI_API_KEY=your-openai-key
+```
+
+### Frontend (.env.production)
+```bash
+VITE_API_BASE_URL=https://api.yourdomain.com/api
+```
+
+---
+
+## Troubleshooting
+
+### Scripts Permission Denied
 ```bash
 chmod +x scripts/*.sh
 ```
 
-### 2. Configure environment
+### MongoDB Connection Failed
 ```bash
-cp .env.example .env
-nano .env  # Edit with your values
+# Check MongoDB status
+sudo systemctl status mongod
+
+# Restart MongoDB
+sudo systemctl restart mongod
 ```
 
-### 3. Install dependencies (if needed)
-```bash
-# Railway CLI
-npm install -g @railway/cli
-
-# Vercel CLI
-npm install -g vercel
-```
-
----
-
-## 📋 Quick Start Guides
-
-### Local Development with Docker
-```bash
-# 1. Configure environment
-cp .env.example .env
-nano .env
-
-# 2. Deploy with Docker
-./scripts/deploy-docker.sh
-
-# 3. Check health
-./scripts/health-check.sh
-
-# 4. View logs
-docker-compose logs -f
-```
-
-### Cloud Deployment (Railway + Vercel)
-```bash
-# 1. Set environment variables
-export JWT_SECRET="$(openssl rand -base64 32)"
-export ANTHROPIC_API_KEY="your-key"
-export CLIENT_URL="https://your-domain.com"
-
-# 2. Deploy backend
-./scripts/deploy-railway.sh
-
-# 3. Deploy frontend (use backend URL from step 2)
-export VITE_API_URL="https://your-backend.railway.app/api"
-./scripts/deploy-vercel.sh
-
-# 4. Verify deployment
-./scripts/health-check.sh \
-  --BACKEND_URL="https://your-backend.railway.app" \
-  --FRONTEND_URL="https://your-frontend.vercel.app"
-```
-
----
-
-## 🔐 Environment Variables
-
-### Required for all deployments:
-```bash
-JWT_SECRET              # Generate with: openssl rand -base64 32
-ANTHROPIC_API_KEY       # From https://console.anthropic.com/
-```
-
-### Docker deployment:
-```bash
-MONGO_ROOT_USERNAME     # MongoDB admin username
-MONGO_ROOT_PASSWORD     # MongoDB admin password
-CLIENT_URL              # Frontend URL for CORS
-VITE_API_URL           # Backend API URL for frontend
-```
-
-### Cloud deployment:
-```bash
-# Railway
-RAILWAY_TOKEN          # Optional: Railway API token
-
-# Vercel
-VERCEL_TOKEN           # Optional: Vercel API token
-
-# MongoDB Atlas
-MONGODB_URI            # MongoDB connection string
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Docker deployment issues
-
-**Services not starting:**
+### Application Won't Start
 ```bash
 # Check logs
-docker-compose logs
+pm2 logs daily-update-api
 
-# Check individual service
-docker-compose logs backend
+# Check environment variables
+pm2 env daily-update-api
+
+# Restart
+pm2 restart daily-update-api
 ```
 
-**Port already in use:**
+### Health Check Fails
 ```bash
-# Check what's using the port
-lsof -i :5000  # Backend
-lsof -i :3000  # Frontend
+# Run manually with verbose output
+./scripts/health-check.sh
 
-# Change port in .env
-BACKEND_PORT=5001
-FRONTEND_PORT=3001
-```
-
-**MongoDB connection refused:**
-```bash
-# Wait for MongoDB to be ready
-docker-compose logs mongodb
-
-# Restart services
-docker-compose restart backend
-```
-
-### Cloud deployment issues
-
-**Railway deployment fails:**
-```bash
-# Check Railway logs
-railway logs
-
-# Redeploy
-railway up --service backend
-```
-
-**Vercel build fails:**
-```bash
-# Check build logs in Vercel dashboard
-# Verify environment variables are set
-
-# Rebuild locally first
-cd frontend && npm run build
+# Check API directly
+curl http://localhost:5000/api/health
 ```
 
 ---
 
-## 📊 Monitoring
+## Customization
 
-### Continuous health monitoring
+### Modify Backup Retention
+Edit `backup-database.sh`:
 ```bash
-# Run health check every 5 minutes
-watch -n 300 ./scripts/health-check.sh
+RETENTION_DAYS=30  # Change to desired number of days
 ```
 
-### Automated backups
+### Configure Cloud Backup
+Edit `backup-database.sh` and uncomment the cloud storage section:
+
+**AWS S3:**
 ```bash
-# Add to crontab for daily backups at 2 AM
-0 2 * * * cd /path/to/daily-update && ./scripts/backup-database.sh
+aws s3 cp "$BACKUP_DIR/$BACKUP_NAME.tar.gz" s3://your-bucket/backups/
 ```
 
----
-
-## 🔄 Common Tasks
-
-### Update deployment
+**Google Cloud:**
 ```bash
-# Pull latest changes
-git pull origin main
-
-# Rebuild and redeploy
-./scripts/deploy-docker.sh --rebuild
+gsutil cp "$BACKUP_DIR/$BACKUP_NAME.tar.gz" gs://your-bucket/backups/
 ```
 
-### Scale services
+### Modify Health Check Frequency
+Edit crontab:
 ```bash
-# Scale backend to 3 instances
-docker-compose up -d --scale backend=3
-```
+crontab -e
 
-### View logs
-```bash
-# All services
-docker-compose logs -f
+# Every 5 minutes:
+*/5 * * * * /path/to/health-check.sh
 
-# Specific service
-docker-compose logs -f backend
+# Every 10 minutes:
+*/10 * * * * /path/to/health-check.sh
 
-# Last 100 lines
-docker-compose logs --tail=100
-```
-
-### Backup before updates
-```bash
-# Create backup
-./scripts/backup-database.sh
-
-# List backups
-./scripts/backup-database.sh list
+# Every hour:
+0 * * * * /path/to/health-check.sh
 ```
 
 ---
 
-## 🆘 Emergency Procedures
+## Security Notes
 
-### Rollback deployment
-```bash
-# Stop current deployment
-docker-compose down
-
-# Checkout previous version
-git checkout <previous-commit>
-
-# Redeploy
-./scripts/deploy-docker.sh
-```
-
-### Restore database
-```bash
-# List available backups
-./scripts/backup-database.sh list
-
-# Restore from backup
-./scripts/backup-database.sh restore ./backups/daily-update-backup-20250101_120000.tar.gz
-```
+1. **Never commit** `.env` files to version control
+2. **Protect script files**: Keep scripts readable only by necessary users
+3. **Secure backups**: Backups contain sensitive data - encrypt before cloud upload
+4. **Review logs**: Regularly check script logs for errors
+5. **Test restores**: Periodically test database restore process
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
-- [Docker Documentation](https://docs.docker.com/)
-- [Railway Documentation](https://docs.railway.app/)
-- [Vercel Documentation](https://vercel.com/docs)
-- [MongoDB Backup Guide](https://www.mongodb.com/docs/manual/core/backups/)
-
----
-
-## 🔒 Security Notes
-
-1. **Never commit** `.env` files or secrets
-2. **Rotate secrets** regularly (JWT_SECRET, API keys)
-3. **Use strong passwords** for MongoDB
-4. **Enable HTTPS** in production
-5. **Restrict database access** to specific IPs
-6. **Monitor logs** for suspicious activity
-7. **Keep backups secure** and encrypted
+- [Deployment Guide](../docs/DEPLOYMENT_GUIDE.md)
+- [API Documentation](../docs/API_DOCUMENTATION.md)
+- [User Guide](../docs/USER_GUIDE.md)
 
 ---
 
-## 💡 Tips
-
-- Test deployments in staging first
-- Always backup before major updates
-- Monitor resource usage after deployment
-- Set up alerts for service downtime
-- Document any custom configuration
-- Keep deployment scripts updated
-
----
-
-For detailed deployment guides, see `DEPLOYMENT.md` in the root directory.
+**Last Updated:** January 15, 2025
