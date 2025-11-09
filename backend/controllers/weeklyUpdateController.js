@@ -8,7 +8,7 @@ import { processWeeklyUpdate } from '../services/claudeService.js';
  */
 export const generateWeeklyUpdate = async (req, res) => {
   try {
-    const { startDate, endDate, rawInput, companyId } = req.body;
+    const { startDate, endDate, rawInput, companyId, tags } = req.body;
 
     if (!startDate || !endDate) {
       return res.status(400).json({
@@ -30,6 +30,11 @@ export const generateWeeklyUpdate = async (req, res) => {
     // Filter by company if provided
     if (companyId) {
       dailyQuery.companyId = companyId;
+    }
+
+    // Filter by tags if provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      dailyQuery.tags = { $in: tags };
     }
 
     // Fetch daily updates for the date range
@@ -81,7 +86,7 @@ export const generateWeeklyUpdate = async (req, res) => {
  */
 export const createWeeklyUpdate = async (req, res) => {
   try {
-    const { startDate, endDate, rawInput, formattedOutput, sections, companyId } = req.body;
+    const { startDate, endDate, rawInput, formattedOutput, sections, companyId, tags } = req.body;
 
     if (!startDate || !endDate) {
       return res.status(400).json({
@@ -139,6 +144,11 @@ export const createWeeklyUpdate = async (req, res) => {
       updateData.companyId = companyId;
     }
 
+    // Add tags if provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      updateData.tags = tags;
+    }
+
     const update = await Update.create(updateData);
 
     res.status(201).json({
@@ -162,7 +172,7 @@ export const createWeeklyUpdate = async (req, res) => {
  */
 export const getWeeklyUpdates = async (req, res) => {
   try {
-    const { search, companyId } = req.query;
+    const { search, companyId, tags } = req.query;
 
     let query = {
       userId: req.user._id,
@@ -172,6 +182,12 @@ export const getWeeklyUpdates = async (req, res) => {
     // Filter by company if provided
     if (companyId) {
       query.companyId = companyId;
+    }
+
+    // Filter by tags if provided
+    if (tags) {
+      const tagIds = tags.split(',').map(id => id.trim());
+      query.tags = { $in: tagIds };
     }
 
     // Search functionality
@@ -184,6 +200,7 @@ export const getWeeklyUpdates = async (req, res) => {
 
     const updates = await Update.find(query)
       .populate('companyId', 'name color')
+      .populate('tags', 'name color category')
       .sort({ 'dateRange.start': -1 });
 
     res.json({

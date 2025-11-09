@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { useAuth } from '../context/AuthContext';
 import ColorModeToggle from '../components/ColorModeToggle';
+import NotificationBell from '../components/NotificationBell';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,6 +47,13 @@ const Dashboard = () => {
       color: 'purple',
     },
     {
+      title: 'Advanced Search',
+      description: 'Search and filter your updates',
+      icon: '🔍',
+      action: () => navigate('/search'),
+      color: 'indigo',
+    },
+    {
       title: 'Manage Companies',
       description: 'Organize updates by company or client',
       icon: '🏢',
@@ -60,11 +68,67 @@ const Dashboard = () => {
       color: 'pink',
     },
     {
+      title: 'Tags & Categories',
+      description: 'Organize your updates with custom tags',
+      icon: '🏷️',
+      action: () => navigate('/tags'),
+      color: 'cyan',
+    },
+    {
+      title: 'Notifications',
+      description: 'View and manage your notifications',
+      icon: '🔔',
+      action: () => navigate('/notifications'),
+      color: 'purple',
+    },
+    {
       title: 'View Analytics',
       description: 'Track your productivity and update trends',
       icon: '📈',
       action: () => navigate('/analytics'),
       color: 'teal',
+    },
+    {
+      title: 'Email Settings',
+      description: 'Configure email delivery and send test emails',
+      icon: '📧',
+      action: () => navigate('/email-settings'),
+      color: 'blue',
+    },
+    {
+      title: 'Scheduled Updates',
+      description: 'Automate update creation with schedules',
+      icon: '📅',
+      action: () => navigate('/schedules'),
+      color: 'yellow',
+    },
+    {
+      title: 'Schedule History',
+      description: 'Monitor schedule execution history and statistics',
+      icon: '📊',
+      action: () => navigate('/schedule-history'),
+      color: 'cyan',
+    },
+    {
+      title: 'Integrations',
+      description: 'Connect Telegram, Google Chat, and more',
+      icon: '🔗',
+      action: () => navigate('/integrations'),
+      color: 'purple',
+    },
+    {
+      title: 'Teams',
+      description: 'Manage teams and collaborate with members',
+      icon: '👥',
+      action: () => navigate('/teams'),
+      color: 'teal',
+    },
+    {
+      title: 'Profile Settings',
+      description: 'Manage your account and security settings',
+      icon: '⚙️',
+      action: () => navigate('/profile'),
+      color: 'gray',
     },
   ];
 
@@ -83,6 +147,7 @@ const Dashboard = () => {
               </Text>
             </VStack>
             <HStack>
+              <NotificationBell />
               <ColorModeToggle />
               <Button onClick={handleLogout} variant="outline" colorScheme="red">
                 Logout

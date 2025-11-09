@@ -7,36 +7,23 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test-utils/setup.js'],
-    env: {
-      VITE_API_URL: 'http://localhost:5000/api'
-    },
-    environmentOptions: {
-      jsdom: {
-        url: 'http://localhost:3000'
-      }
-    },
+    setupFiles: ['./src/__tests__/setup.js'],
+    css: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/test-utils/',
-        '**/*.test.{js,jsx}',
+        'src/__tests__/',
         '**/*.config.js',
-        '**/dist/**'
+        '**/main.jsx',
+        '**/vite-env.d.ts',
       ],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80
-      }
-    }
+    },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 });

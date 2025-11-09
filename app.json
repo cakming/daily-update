@@ -1,0 +1,68 @@
+{
+  "name": "Daily Update",
+  "description": "AI-powered daily update and weekly summary generator",
+  "repository": "https://github.com/yourusername/daily-update",
+  "keywords": ["node", "express", "react", "mongodb", "anthropic", "claude"],
+  "image": "heroku/nodejs",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "mongolab:sandbox"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "JWT_SECRET": {
+      "description": "Secret key for JWT tokens",
+      "generator": "secret"
+    },
+    "JWT_EXPIRE": {
+      "description": "JWT expiration time",
+      "value": "30d"
+    },
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for AI features",
+      "required": true
+    },
+    "CLIENT_URL": {
+      "description": "Frontend URL for CORS",
+      "required": true
+    },
+    "SMTP_HOST": {
+      "description": "SMTP server host"
+    },
+    "SMTP_PORT": {
+      "description": "SMTP server port",
+      "value": "587"
+    },
+    "SMTP_USER": {
+      "description": "SMTP username"
+    },
+    "SMTP_PASS": {
+      "description": "SMTP password"
+    },
+    "EMAIL_FROM": {
+      "description": "Email sender address"
+    },
+    "EMAIL_FROM_NAME": {
+      "description": "Email sender name",
+      "value": "Daily Update"
+    }
+  },
+  "scripts": {
+    "postdeploy": "cd backend && npm run migrate"
+  }
+}

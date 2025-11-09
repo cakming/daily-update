@@ -12,6 +12,21 @@ const updateSchema = new mongoose.Schema({
     required: false,
     index: true
   },
+  tags: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tag'
+  }],
+  teamId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Team',
+    required: false,
+    index: true
+  },
+  visibility: {
+    type: String,
+    enum: ['private', 'team'],
+    default: 'private'
+  },
   type: {
     type: String,
     enum: ['daily', 'weekly'],
@@ -72,6 +87,8 @@ updateSchema.index({ userId: 1, type: 1, date: -1 });
 updateSchema.index({ userId: 1, createdAt: -1 });
 updateSchema.index({ userId: 1, companyId: 1, date: -1 });
 updateSchema.index({ companyId: 1, createdAt: -1 });
+updateSchema.index({ teamId: 1, createdAt: -1 });
+updateSchema.index({ teamId: 1, visibility: 1, date: -1 });
 
 const Update = mongoose.model('Update', updateSchema);
 

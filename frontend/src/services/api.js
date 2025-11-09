@@ -43,6 +43,21 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/profile', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (resetToken, data) => api.put(`/auth/reset-password/${resetToken}`, data),
+  sendVerification: () => api.post('/auth/send-verification'),
+  verifyEmail: (verificationToken) => api.get(`/auth/verify-email/${verificationToken}`),
+  // 2FA APIs
+  get2FAStatus: () => api.get('/auth/2fa/status'),
+  setup2FA: () => api.post('/auth/2fa/setup'),
+  verify2FA: (data) => api.post('/auth/2fa/verify', data),
+  disable2FA: (data) => api.post('/auth/2fa/disable', data),
+  // Avatar APIs
+  uploadAvatar: (formData) => api.post('/auth/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteAvatar: () => api.delete('/auth/avatar'),
 };
 
 // Daily Updates APIs
@@ -112,6 +127,78 @@ export const templateAPI = {
   delete: (id) => api.delete(`/templates/${id}`),
   use: (id) => api.post(`/templates/${id}/use`),
   getStats: () => api.get('/templates/stats'),
+};
+
+// Tag APIs
+export const tagAPI = {
+  create: (data) => api.post('/tags', data),
+  getAll: (params) => api.get('/tags', { params }),
+  getById: (id) => api.get(`/tags/${id}`),
+  update: (id, data) => api.put(`/tags/${id}`, data),
+  delete: (id, permanent = false) => api.delete(`/tags/${id}`, {
+    params: { permanent }
+  }),
+  getStats: () => api.get('/tags/stats'),
+};
+
+// Bulk APIs
+export const bulkAPI = {
+  bulkDelete: (data) => api.post('/bulk/delete', data),
+  assignTags: (updateIds, tagIds) => api.post('/bulk/assign-tags', { updateIds, tagIds }),
+  removeTags: (updateIds, tagIds) => api.post('/bulk/remove-tags', { updateIds, tagIds }),
+  assignCompany: (updateIds, companyId) => api.post('/bulk/assign-company', { updateIds, companyId }),
+  export: (ids, format = 'json') => api.post('/bulk/export', { ids, format }),
+};
+
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  clearRead: () => api.delete('/notifications/clear-read'),
+  create: (data) => api.post('/notifications', data),
+};
+
+export const emailAPI = {
+  getConfigStatus: () => api.get('/email/config-status'),
+  sendTestEmail: (data) => api.post('/email/test', data),
+  sendDailyUpdate: (id, recipients) => api.post(`/email/daily/${id}`, { recipients }),
+  sendWeeklySummary: (id, recipients) => api.post(`/email/weekly/${id}`, { recipients }),
+};
+
+export const scheduleAPI = {
+  getAll: (params) => api.get('/schedules', { params }),
+  getById: (id) => api.get(`/schedules/${id}`),
+  create: (data) => api.post('/schedules', data),
+  update: (id, data) => api.put(`/schedules/${id}`, data),
+  delete: (id) => api.delete(`/schedules/${id}`),
+  toggle: (id) => api.post(`/schedules/${id}/toggle`),
+};
+
+export const scheduleHistoryAPI = {
+  getAll: (params) => api.get('/schedule-history', { params }),
+  getById: (id) => api.get(`/schedule-history/${id}`),
+  getBySchedule: (scheduleId, params) => api.get(`/schedule-history/schedule/${scheduleId}`, { params }),
+  getStatistics: (params) => api.get('/schedule-history/stats', { params }),
+  delete: (id) => api.delete(`/schedule-history/${id}`),
+  deleteBySchedule: (scheduleId) => api.delete(`/schedule-history/schedule/${scheduleId}`),
+};
+
+// Team APIs
+export const teamAPI = {
+  create: (data) => api.post('/teams', data),
+  getAll: (params) => api.get('/teams', { params }),
+  getById: (id) => api.get(`/teams/${id}`),
+  update: (id, data) => api.put(`/teams/${id}`, data),
+  delete: (id) => api.delete(`/teams/${id}`),
+  // Member management
+  addMember: (id, data) => api.post(`/teams/${id}/members`, data),
+  removeMember: (id, userId) => api.delete(`/teams/${id}/members/${userId}`),
+  updateMemberRole: (id, userId, data) => api.put(`/teams/${id}/members/${userId}`, data),
+  // Team data
+  getUpdates: (id, params) => api.get(`/teams/${id}/updates`, { params }),
+  getStats: (id) => api.get(`/teams/${id}/stats`),
 };
 
 export default api;

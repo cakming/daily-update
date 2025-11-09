@@ -81,31 +81,30 @@ const ExportButton = ({ filters = {} }) => {
   };
 
   return (
-    <Menu.Root>
-      <MenuButton asChild>
-        <Button
-          colorScheme="teal"
-          loading={loading}
-          variant="outline"
-        >
-          Export
-        </Button>
+    <Menu>
+      <MenuButton
+        as={Button}
+        colorScheme="teal"
+        isLoading={loading}
+        variant="outline"
+      >
+        📥 Export
       </MenuButton>
       <MenuList>
-        <MenuItem onClick={() => handleExport('csv')}>
+        <MenuItem icon="📄" onClick={() => handleExport('csv')}>
           Export as CSV
         </MenuItem>
-        <MenuItem onClick={() => handleExport('json')}>
+        <MenuItem icon="📋" onClick={() => handleExport('json')}>
           Export as JSON
         </MenuItem>
-        <MenuItem onClick={() => handleExport('markdown')}>
+        <MenuItem icon="📝" onClick={() => handleExport('markdown')}>
           Export as Markdown
         </MenuItem>
-        <MenuItem onClick={() => handleExport('pdf')}>
+        <MenuItem icon="📕" onClick={() => handleExport('pdf')}>
           Export as PDF
         </MenuItem>
       </MenuList>
-    </Menu.Root>
+    </Menu>
   );
 };
 

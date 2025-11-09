@@ -11,14 +11,17 @@ import {
   Text,
   Card,
   Input,
-  useToast,
+  
   IconButton,
   FormControl,
   FormLabel,
   Select,
+  useToast,
 } from '@chakra-ui/react';
 import { dailyUpdateAPI, templateAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
+import TagSelector from '../components/TagSelector';
+import TeamSelector from '../components/TeamSelector';
 
 const CreateDailyUpdate = () => {
   const navigate = useNavigate();
@@ -27,6 +30,9 @@ const CreateDailyUpdate = () => {
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [companyId, setCompanyId] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [teamId, setTeamId] = useState(null);
+  const [visibility, setVisibility] = useState('private');
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,6 +99,9 @@ const CreateDailyUpdate = () => {
         rawInput,
         date,
         companyId,
+        tags: selectedTags,
+        teamId,
+        visibility,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -134,6 +143,9 @@ const CreateDailyUpdate = () => {
     setSections(null);
     setDate(new Date().toISOString().split('T')[0]);
     setCompanyId(null);
+    setSelectedTags([]);
+    setTeamId(null);
+    setVisibility('private');
     setSelectedTemplate('');
   };
 
@@ -157,7 +169,7 @@ const CreateDailyUpdate = () => {
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
           {/* Date Picker */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Select Date</Heading>
               <Input
@@ -167,10 +179,10 @@ const CreateDailyUpdate = () => {
                 max="2099-12-31"
               />
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Company Selector */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Company/Client</Heading>
               <FormControl>
@@ -182,11 +194,35 @@ const CreateDailyUpdate = () => {
                 />
               </FormControl>
             </VStack>
-          </Card.Root>
+          </Card>
+
+          {/* Tag Selector */}
+          <Card p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Tags</Heading>
+              <TagSelector
+                selectedTags={selectedTags}
+                onChange={setSelectedTags}
+              />
+            </VStack>
+          </Card>
+
+          {/* Team Sharing */}
+          <Card p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Team Sharing</Heading>
+              <TeamSelector
+                selectedTeamId={teamId}
+                onTeamChange={setTeamId}
+                visibility={visibility}
+                onVisibilityChange={setVisibility}
+              />
+            </VStack>
+          </Card>
 
           {/* Template Selector */}
           {templates.length > 0 && (
-            <Card.Root p={6}>
+            <Card p={6}>
               <VStack align="start" gap={4}>
                 <HStack justify="space-between" w="full">
                   <Heading size="md">Use Template</Heading>
@@ -211,11 +247,11 @@ const CreateDailyUpdate = () => {
                   ))}
                 </Select>
               </VStack>
-            </Card.Root>
+            </Card>
           )}
 
           {/* Input Section */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <HStack justify="space-between" w="full">
                 <Heading size="md">Paste Technical Update</Heading>
@@ -240,7 +276,7 @@ const CreateDailyUpdate = () => {
                 fontSize="sm"
               />
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Action Buttons */}
           <HStack gap={4}>
@@ -260,7 +296,7 @@ const CreateDailyUpdate = () => {
 
           {/* Preview Section */}
           {formattedOutput && (
-            <Card.Root p={6} bg="blue.50" borderColor="blue.200" borderWidth="2px">
+            <Card p={6} bg="blue.50" borderColor="blue.200" borderWidth="2px">
               <VStack align="start" gap={4}>
                 <HStack justify="space-between" w="full">
                   <Heading size="md" color="blue.700">
@@ -301,7 +337,7 @@ const CreateDailyUpdate = () => {
                   </Button>
                 </HStack>
               </VStack>
-            </Card.Root>
+            </Card>
           )}
         </VStack>
       </Container>

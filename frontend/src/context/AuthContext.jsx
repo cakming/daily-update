@@ -39,10 +39,19 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, twoFactorToken = null, backupCode = null) => {
     try {
-      const response = await authAPI.login({ email, password });
-      const { data } = response.data;
+      const payload = { email, password };
+      if (twoFactorToken) payload.twoFactorToken = twoFactorToken;
+      if (backupCode) payload.backupCode = backupCode;
+
+      const response = await authAPI.login(payload);
+      const { data, require2FA } = response.data;
+
+      // If 2FA is required, return without setting auth
+      if (require2FA) {
+        return { success: true, require2FA: true };
+      }
 
       setUser(data);
       setToken(data.token);

@@ -8,7 +8,7 @@ import { processDailyUpdate } from '../services/claudeService.js';
  */
 export const createDailyUpdate = async (req, res) => {
   try {
-    const { rawInput, date, companyId } = req.body;
+    const { rawInput, date, companyId, tags } = req.body;
 
     if (!rawInput || !date) {
       return res.status(400).json({
@@ -58,6 +58,11 @@ export const createDailyUpdate = async (req, res) => {
       updateData.companyId = companyId;
     }
 
+    // Add tags if provided
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      updateData.tags = tags;
+    }
+
     const update = await Update.create(updateData);
 
     res.status(201).json({
@@ -81,7 +86,7 @@ export const createDailyUpdate = async (req, res) => {
  */
 export const getDailyUpdates = async (req, res) => {
   try {
-    const { startDate, endDate, search, companyId } = req.query;
+    const { startDate, endDate, search, companyId, tags } = req.query;
 
     let query = {
       userId: req.user._id,
@@ -91,6 +96,12 @@ export const getDailyUpdates = async (req, res) => {
     // Filter by company if provided
     if (companyId) {
       query.companyId = companyId;
+    }
+
+    // Filter by tags if provided
+    if (tags) {
+      const tagIds = tags.split(',').map(id => id.trim());
+      query.tags = { $in: tagIds };
     }
 
     // Filter by date range if provided
@@ -114,6 +125,7 @@ export const getDailyUpdates = async (req, res) => {
 
     const updates = await Update.find(query)
       .populate('companyId', 'name color')
+      .populate('tags', 'name color category')
       .sort({ date: -1 });
 
     res.json({

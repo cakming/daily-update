@@ -1,237 +1,140 @@
 #!/bin/bash
 
 ###############################################################################
-# Health Check Script
-# Verify all services are running correctly
+# Daily Update Application - Health Check Script
+# Monitors application health and restarts if necessary
 ###############################################################################
 
-# Colors
+# Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m'
 
-print_header() {
-    echo -e "\n${BLUE}========================================${NC}"
-    echo -e "${BLUE}$1${NC}"
-    echo -e "${BLUE}========================================${NC}\n"
+# Configuration
+API_URL="http://localhost:5000/api/health"
+PM2_APP_NAME="daily-update-api"
+MAX_RETRIES=3
+RETRY_DELAY=5
+
+# Function to check API health
+check_api_health() {
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" 2>/dev/null)
+    echo "$HTTP_CODE"
 }
 
-print_success() { echo -e "${GREEN}✅ $1${NC}"; }
-print_error() { echo -e "${RED}❌ $1${NC}"; }
-print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-print_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-
-# Service URLs
-BACKEND_URL="${BACKEND_URL:-http://localhost:5000}"
-FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
-MONGODB_HOST="${MONGODB_HOST:-localhost}"
-MONGODB_PORT="${MONGODB_PORT:-27017}"
-
-check_backend() {
-    print_info "Checking backend service..."
-
-    if curl -f -s "$BACKEND_URL/api/health" > /dev/null; then
-        RESPONSE=$(curl -s "$BACKEND_URL/api/health")
-        print_success "Backend is healthy"
-        echo "    $RESPONSE"
-        return 0
-    else
-        print_error "Backend health check failed"
-        return 1
-    fi
-}
-
-check_frontend() {
-    print_info "Checking frontend service..."
-
-    if curl -f -s "$FRONTEND_URL" > /dev/null; then
-        print_success "Frontend is accessible"
-        return 0
-    else
-        print_error "Frontend check failed"
-        return 1
-    fi
-}
-
+# Function to check MongoDB
 check_mongodb() {
-    print_info "Checking MongoDB..."
-
-    if command -v mongosh &> /dev/null; then
-        if mongosh --host "$MONGODB_HOST" --port "$MONGODB_PORT" --eval "db.adminCommand('ping')" --quiet > /dev/null 2>&1; then
-            print_success "MongoDB is running"
-            return 0
-        else
-            print_error "MongoDB connection failed"
-            return 1
-        fi
-    elif docker ps | grep -q "daily-update-mongodb"; then
-        if docker exec daily-update-mongodb mongosh --eval "db.adminCommand('ping')" --quiet > /dev/null 2>&1; then
-            print_success "MongoDB (Docker) is running"
-            return 0
-        else
-            print_error "MongoDB Docker container not responding"
-            return 1
-        fi
-    else
-        print_warning "Cannot check MongoDB (mongosh not found and Docker not running)"
-        return 2
-    fi
-}
-
-check_docker_services() {
-    print_info "Checking Docker services..."
-
-    if ! command -v docker &> /dev/null; then
-        print_warning "Docker not installed"
-        return 2
-    fi
-
-    if ! docker ps > /dev/null 2>&1; then
-        print_warning "Docker daemon not running"
-        return 2
-    fi
-
-    SERVICES=$(docker-compose ps --services 2>/dev/null)
-    if [ -z "$SERVICES" ]; then
-        print_warning "No Docker Compose services found"
-        return 2
-    fi
-
-    echo "Docker services status:"
-    docker-compose ps
-    echo ""
-
-    return 0
-}
-
-check_environment() {
-    print_info "Checking environment configuration..."
-
-    ISSUES=0
-
-    if [ ! -f .env ]; then
-        print_warning ".env file not found"
-        ISSUES=$((ISSUES + 1))
-    else
-        source .env
-
-        if [ -z "$JWT_SECRET" ]; then
-            print_warning "JWT_SECRET not set"
-            ISSUES=$((ISSUES + 1))
-        fi
-
-        if [ -z "$ANTHROPIC_API_KEY" ]; then
-            print_warning "ANTHROPIC_API_KEY not set"
-            ISSUES=$((ISSUES + 1))
-        fi
-    fi
-
-    if [ $ISSUES -eq 0 ]; then
-        print_success "Environment configured correctly"
+    if mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
         return 0
     else
-        print_warning "Found $ISSUES environment issues"
         return 1
     fi
 }
 
-show_summary() {
-    local backend_status=$1
-    local frontend_status=$2
-    local mongodb_status=$3
-
-    print_header "Health Check Summary"
-
-    echo -e "${BLUE}Service Status:${NC}"
-    [ $backend_status -eq 0 ] && echo -e "  Backend:  ${GREEN}✅ Healthy${NC}" || echo -e "  Backend:  ${RED}❌ Unhealthy${NC}"
-    [ $frontend_status -eq 0 ] && echo -e "  Frontend: ${GREEN}✅ Healthy${NC}" || echo -e "  Frontend: ${RED}❌ Unhealthy${NC}"
-    [ $mongodb_status -eq 0 ] && echo -e "  MongoDB:  ${GREEN}✅ Healthy${NC}" || [ $mongodb_status -eq 2 ] && echo -e "  MongoDB:  ${YELLOW}⚠️  Unknown${NC}" || echo -e "  MongoDB:  ${RED}❌ Unhealthy${NC}"
-
-    echo ""
-
-    if [ $backend_status -eq 0 ] && [ $frontend_status -eq 0 ] && [ $mongodb_status -le 1 ]; then
-        echo -e "${GREEN}🎉 All services are healthy!${NC}"
-        return 0
-    else
-        echo -e "${RED}⚠️  Some services have issues${NC}"
-        return 1
+# Function to check PM2 process
+check_pm2_process() {
+    if pm2 describe "$PM2_APP_NAME" > /dev/null 2>&1; then
+        STATUS=$(pm2 jlist | jq -r ".[] | select(.name==\"$PM2_APP_NAME\") | .pm2_env.status")
+        if [ "$STATUS" = "online" ]; then
+            return 0
+        fi
     fi
+    return 1
 }
 
-run_detailed_check() {
-    print_info "Running detailed checks..."
+# Main health check
+echo "========================================"
+echo "Health Check - $(date)"
+echo "========================================"
+echo ""
 
-    echo -e "\n${BLUE}Backend Details:${NC}"
-    curl -s "$BACKEND_URL/api/health" | python3 -m json.tool 2>/dev/null || echo "Could not fetch backend details"
+# Check MongoDB
+echo -n "MongoDB: "
+if check_mongodb; then
+    echo -e "${GREEN}✓ Running${NC}"
+    MONGODB_OK=true
+else
+    echo -e "${RED}✗ Not responding${NC}"
+    MONGODB_OK=false
+fi
 
-    echo -e "\n${BLUE}Docker Stats (if running):${NC}"
-    docker stats --no-stream 2>/dev/null || echo "Docker not available"
+# Check PM2 process
+echo -n "PM2 Process ($PM2_APP_NAME): "
+if check_pm2_process; then
+    echo -e "${GREEN}✓ Online${NC}"
+    PM2_OK=true
+else
+    echo -e "${RED}✗ Not running${NC}"
+    PM2_OK=false
+fi
 
-    echo -e "\n${BLUE}Recent Logs:${NC}"
-    if docker ps | grep -q "daily-update-backend"; then
-        echo "Backend logs:"
-        docker logs daily-update-backend --tail 10 2>&1 | grep -i error || echo "No errors found"
+# Check API endpoint
+echo -n "API Health Endpoint: "
+HTTP_CODE=$(check_api_health)
+
+if [ "$HTTP_CODE" = "200" ]; then
+    echo -e "${GREEN}✓ Healthy (HTTP $HTTP_CODE)${NC}"
+    API_OK=true
+else
+    echo -e "${RED}✗ Unhealthy (HTTP $HTTP_CODE)${NC}"
+    API_OK=false
+fi
+
+echo ""
+
+# Take action if unhealthy
+if [ "$API_OK" = false ] || [ "$PM2_OK" = false ]; then
+    echo -e "${YELLOW}⚠️  Application is unhealthy. Attempting recovery...${NC}"
+    echo ""
+    
+    # Check if MongoDB is the issue
+    if [ "$MONGODB_OK" = false ]; then
+        echo "Attempting to start MongoDB..."
+        sudo systemctl start mongod
+        sleep 3
     fi
-}
-
-main() {
-    print_header "Daily Update App - Health Check"
-
-    # Check environment first
-    check_environment
+    
+    # Restart application
+    echo "Restarting application with PM2..."
+    pm2 restart "$PM2_APP_NAME"
+    
+    # Wait and retry
+    echo "Waiting ${RETRY_DELAY}s before rechecking..."
+    sleep $RETRY_DELAY
+    
+    # Recheck
+    RETRY=1
+    while [ $RETRY -le $MAX_RETRIES ]; do
+        echo "Retry $RETRY of $MAX_RETRIES..."
+        HTTP_CODE=$(check_api_health)
+        
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo -e "${GREEN}✓ Application recovered successfully!${NC}"
+            pm2 status
+            exit 0
+        fi
+        
+        RETRY=$((RETRY + 1))
+        if [ $RETRY -le $MAX_RETRIES ]; then
+            sleep $RETRY_DELAY
+        fi
+    done
+    
+    # Recovery failed
+    echo -e "${RED}✗ Application recovery failed after $MAX_RETRIES attempts${NC}"
     echo ""
-
-    # Check Docker services if available
-    check_docker_services
+    echo "Recent logs:"
+    pm2 logs "$PM2_APP_NAME" --lines 20 --nostream
     echo ""
-
-    # Check individual services
-    check_backend
-    BACKEND_STATUS=$?
+    echo "Please investigate manually."
+    exit 1
+else
+    echo -e "${GREEN}✓ All systems healthy${NC}"
+    
+    # Display uptime and memory
     echo ""
-
-    check_frontend
-    FRONTEND_STATUS=$?
-    echo ""
-
-    check_mongodb
-    MONGODB_STATUS=$?
-    echo ""
-
-    # Show summary
-    show_summary $BACKEND_STATUS $FRONTEND_STATUS $MONGODB_STATUS
-    SUMMARY_STATUS=$?
-
-    # Detailed check if requested
-    if [ "$1" == "--detailed" ]; then
-        run_detailed_check
-    fi
-
-    exit $SUMMARY_STATUS
-}
-
-# Parse arguments
-case "${1}" in
-    --detailed|-d)
-        main --detailed
-        ;;
-    --help|-h)
-        echo "Usage: $0 [OPTIONS]"
-        echo ""
-        echo "Options:"
-        echo "  --detailed, -d    Run detailed health check"
-        echo "  --help, -h        Show this help message"
-        echo ""
-        echo "Environment variables:"
-        echo "  BACKEND_URL       Backend URL (default: http://localhost:5000)"
-        echo "  FRONTEND_URL      Frontend URL (default: http://localhost:3000)"
-        echo "  MONGODB_HOST      MongoDB host (default: localhost)"
-        echo "  MONGODB_PORT      MongoDB port (default: 27017)"
-        exit 0
-        ;;
-    *)
-        main
-        ;;
-esac
+    echo "Application Status:"
+    pm2 describe "$PM2_APP_NAME" | grep -E "uptime|memory|restarts"
+    exit 0
+fi

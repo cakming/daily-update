@@ -7,6 +7,15 @@ import companyRoutes from './routes/companies.js';
 import exportRoutes from './routes/export.js';
 import analyticsRoutes from './routes/analytics.js';
 import templateRoutes from './routes/templates.js';
+import tagRoutes from './routes/tags.js';
+import bulkRoutes from './routes/bulk.js';
+import notificationRoutes from './routes/notifications.js';
+import emailRoutes from './routes/email.js';
+import scheduleRoutes from './routes/schedules.js';
+import scheduleHistoryRoutes from './routes/scheduleHistory.js';
+import integrationRoutes from './routes/integrations.js';
+import notificationPreferenceRoutes from './routes/notificationPreferences.js';
+import teamRoutes from './routes/teams.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -37,6 +46,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files for avatars
+app.use('/uploads', express.static('uploads'));
+
 // Apply general rate limiting to all API routes
 app.use('/api/', apiLimiter);
 
@@ -48,6 +60,15 @@ app.use('/api/weekly-updates', aiLimiter, weeklyUpdateRoutes);
 app.use('/api/export', exportLimiter, exportRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/bulk', bulkRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/notification-preferences', notificationPreferenceRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/schedule-history', scheduleHistoryRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/teams', teamRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
