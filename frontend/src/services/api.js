@@ -53,6 +53,11 @@ export const authAPI = {
   setup2FA: () => api.post('/auth/2fa/setup'),
   verify2FA: (data) => api.post('/auth/2fa/verify', data),
   disable2FA: (data) => api.post('/auth/2fa/disable', data),
+  // Avatar APIs
+  uploadAvatar: (formData) => api.post('/auth/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  deleteAvatar: () => api.delete('/auth/avatar'),
 };
 
 // Daily Updates APIs

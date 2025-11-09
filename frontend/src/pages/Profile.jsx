@@ -104,31 +104,82 @@ const Profile = () => {
     }
   }, [user]);
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: 'File too large',
-          description: 'Avatar image must be less than 5MB',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Avatar image must be less than 5MB',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const response = await authAPI.uploadAvatar(formData);
+
+      // Update user context with new avatar
+      const updatedUser = { ...user, avatar: response.data.data.avatar };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
       toast({
-        title: 'Avatar preview loaded',
-        description: 'Avatar upload will be available soon',
-        status: 'info',
+        title: 'Avatar uploaded successfully',
+        status: 'success',
         duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: 'Avatar upload failed',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      setAvatarPreview(null);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    try {
+      await authAPI.deleteAvatar();
+
+      // Update user context
+      const updatedUser = { ...user, avatar: null };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setAvatarPreview(null);
+
+      toast({
+        title: 'Avatar deleted successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Error deleting avatar:', error);
+      toast({
+        title: 'Avatar deletion failed',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
         isClosable: true,
       });
     }
@@ -253,25 +304,40 @@ const Profile = () => {
                 <Avatar
                   size="2xl"
                   name={user?.name}
-                  src={avatarPreview}
+                  src={
+                    avatarPreview ||
+                    (user?.avatar ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/avatars/${user.avatar}` : null)
+                  }
                   bg="purple.500"
                   color="white"
                 />
-                <Button
-                  size="sm"
-                  variant="link"
-                  colorScheme="purple"
-                  as="label"
-                  cursor="pointer"
-                >
-                  Change Avatar
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    display="none"
-                  />
-                </Button>
+                <HStack>
+                  <Button
+                    size="sm"
+                    variant="link"
+                    colorScheme="purple"
+                    as="label"
+                    cursor="pointer"
+                  >
+                    Change Avatar
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      display="none"
+                    />
+                  </Button>
+                  {(user?.avatar || avatarPreview) && (
+                    <Button
+                      size="sm"
+                      variant="link"
+                      colorScheme="red"
+                      onClick={handleDeleteAvatar}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </HStack>
               </VStack>
               <VStack align="start" flex={1} gap={2}>
                 <Heading size="lg">{user?.name}</Heading>

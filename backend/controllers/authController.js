@@ -504,7 +504,8 @@ export const updateProfile = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        emailVerified: user.emailVerified
+        emailVerified: user.emailVerified,
+        avatar: user.avatar
       }
     });
   } catch (error) {
@@ -512,6 +513,102 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Upload user avatar
+ * @route   POST /api/auth/avatar
+ * @access  Private
+ */
+export const uploadUserAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Delete old avatar file if exists
+    if (user.avatar) {
+      const { deleteAvatarFile } = await import('../middleware/upload.js');
+      deleteAvatarFile(user.avatar);
+    }
+
+    // Update user avatar with filename
+    user.avatar = req.file.filename;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      data: {
+        avatar: user.avatar,
+        avatarUrl: `/uploads/avatars/${user.avatar}`
+      }
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading avatar',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Delete user avatar
+ * @route   DELETE /api/auth/avatar
+ * @access  Private
+ */
+export const deleteUserAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (!user.avatar) {
+      return res.status(400).json({
+        success: false,
+        message: 'No avatar to delete'
+      });
+    }
+
+    // Delete avatar file
+    const { deleteAvatarFile } = await import('../middleware/upload.js');
+    deleteAvatarFile(user.avatar);
+
+    // Remove avatar from user
+    user.avatar = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Avatar deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete avatar error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while deleting avatar',
       error: error.message
     });
   }

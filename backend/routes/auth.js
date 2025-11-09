@@ -8,7 +8,9 @@ import {
   resetPassword,
   sendVerification,
   verifyEmail,
-  updateProfile
+  updateProfile,
+  uploadUserAvatar,
+  deleteUserAvatar
 } from '../controllers/authController.js';
 import {
   setup2FA,
@@ -18,6 +20,7 @@ import {
 } from '../controllers/twoFactorController.js';
 import { protect } from '../middleware/auth.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
+import { uploadAvatar } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -58,5 +61,9 @@ router.get('/2fa/status', protect, get2FAStatus);
 router.post('/2fa/setup', protect, authLimiter, setup2FA);
 router.post('/2fa/verify', protect, authLimiter, verify2FA);
 router.post('/2fa/disable', protect, authLimiter, disable2FA);
+
+// Avatar Routes (Protected)
+router.post('/avatar', protect, uploadAvatar.single('avatar'), uploadUserAvatar);
+router.delete('/avatar', protect, deleteUserAvatar);
 
 export default router;
