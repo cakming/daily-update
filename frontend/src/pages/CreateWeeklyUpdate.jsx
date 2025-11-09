@@ -19,6 +19,7 @@ import {
 import { weeklyUpdateAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 import TagSelector from '../components/TagSelector';
+import TeamSelector from '../components/TeamSelector';
 
 const CreateWeeklyUpdate = () => {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ const CreateWeeklyUpdate = () => {
   const [endDate, setEndDate] = useState('');
   const [companyId, setCompanyId] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [teamId, setTeamId] = useState(null);
+  const [visibility, setVisibility] = useState('private');
   const [rawInput, setRawInput] = useState('');
   const [formattedOutput, setFormattedOutput] = useState('');
   const [sections, setSections] = useState(null);
@@ -66,6 +69,8 @@ const CreateWeeklyUpdate = () => {
         rawInput: rawInput || undefined,
         companyId,
         tags: selectedTags,
+        teamId,
+        visibility,
       });
 
       setFormattedOutput(response.data.data.formattedOutput);
@@ -151,6 +156,8 @@ const CreateWeeklyUpdate = () => {
     setEndDate('');
     setCompanyId(null);
     setSelectedTags([]);
+    setTeamId(null);
+    setVisibility('private');
     setRawInput('');
     setFormattedOutput('');
     setSections(null);
@@ -177,7 +184,7 @@ const CreateWeeklyUpdate = () => {
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
           {/* Date Range Picker */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Select Date Range</Heading>
               <Text color="gray.600" fontSize="sm">
@@ -206,10 +213,10 @@ const CreateWeeklyUpdate = () => {
                 </VStack>
               </HStack>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Company Selector */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Company/Client</Heading>
               <FormControl>
@@ -221,10 +228,10 @@ const CreateWeeklyUpdate = () => {
                 />
               </FormControl>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Tag Selector */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Tags</Heading>
               <TagSelector
@@ -232,10 +239,23 @@ const CreateWeeklyUpdate = () => {
                 onChange={setSelectedTags}
               />
             </VStack>
-          </Card.Root>
+          </Card>
+
+          {/* Team Sharing */}
+          <Card p={6}>
+            <VStack align="start" gap={4}>
+              <Heading size="md">Team Sharing</Heading>
+              <TeamSelector
+                selectedTeamId={teamId}
+                onTeamChange={setTeamId}
+                visibility={visibility}
+                onVisibilityChange={setVisibility}
+              />
+            </VStack>
+          </Card>
 
           {/* Optional Manual Input */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Manual Input (Optional)</Heading>
               <Text color="gray.600" fontSize="sm">
@@ -250,7 +270,7 @@ const CreateWeeklyUpdate = () => {
                 fontSize="sm"
               />
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Action Buttons */}
           <HStack gap={4}>
@@ -270,7 +290,7 @@ const CreateWeeklyUpdate = () => {
 
           {/* Preview Section */}
           {formattedOutput && (
-            <Card.Root p={6} bg="green.50" borderColor="green.200" borderWidth="2px">
+            <Card p={6} bg="green.50" borderColor="green.200" borderWidth="2px">
               <VStack align="start" gap={4}>
                 <HStack justify="space-between" w="full">
                   <VStack align="start" gap={0}>
@@ -321,7 +341,7 @@ const CreateWeeklyUpdate = () => {
                   </Button>
                 </HStack>
               </VStack>
-            </Card.Root>
+            </Card>
           )}
         </VStack>
       </Container>

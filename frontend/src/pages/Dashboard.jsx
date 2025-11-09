@@ -117,6 +117,13 @@ const Dashboard = () => {
       color: 'purple',
     },
     {
+      title: 'Teams',
+      description: 'Manage teams and collaborate with members',
+      icon: '👥',
+      action: () => navigate('/teams'),
+      color: 'teal',
+    },
+    {
       title: 'Profile Settings',
       description: 'Manage your account and security settings',
       icon: '⚙️',
