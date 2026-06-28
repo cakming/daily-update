@@ -36,7 +36,7 @@ export const PageLoader = ({ message = 'Loading...' }) => (
 export const CardSkeleton = ({ count = 1 }) => (
   <>
     {Array.from({ length: count }).map((_, index) => (
-      <Card.Root key={index} p={6}>
+      <Card key={index} p={6}>
         <VStack align="stretch" gap={4}>
           <HStack justifyContent="space-between">
             <Skeleton height="24px" width="150px" />
@@ -48,7 +48,7 @@ export const CardSkeleton = ({ count = 1 }) => (
             <Skeleton height="24px" width="80px" />
           </HStack>
         </VStack>
-      </Card.Root>
+      </Card>
     ))}
   </>
 );
@@ -74,13 +74,13 @@ export const TableSkeleton = ({ rows = 5, columns = 4 }) => (
 export const StatsSkeleton = ({ count = 4 }) => (
   <SimpleGrid columns={{ base: 1, md: 2, lg: count }} gap={4}>
     {Array.from({ length: count }).map((_, index) => (
-      <Card.Root key={index} p={6}>
+      <Card key={index} p={6}>
         <VStack align="start" gap={2}>
           <Skeleton height="16px" width="100px" />
           <Skeleton height="32px" width="80px" />
           <Skeleton height="14px" width="120px" />
         </VStack>
-      </Card.Root>
+      </Card>
     ))}
   </SimpleGrid>
 );
@@ -148,20 +148,20 @@ export const DashboardSkeleton = () => (
     <StatsSkeleton count={4} />
 
     <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
-      <Card.Root p={6}>
+      <Card p={6}>
         <Skeleton height="24px" width="150px" mb={4} />
         <ChartSkeleton height="250px" />
-      </Card.Root>
-      <Card.Root p={6}>
+      </Card>
+      <Card p={6}>
         <Skeleton height="24px" width="150px" mb={4} />
         <ChartSkeleton height="250px" />
-      </Card.Root>
+      </Card>
     </SimpleGrid>
 
-    <Card.Root p={6}>
+    <Card p={6}>
       <Skeleton height="24px" width="200px" mb={4} />
       <TableSkeleton rows={5} columns={4} />
-    </Card.Root>
+    </Card>
   </VStack>
 );
 

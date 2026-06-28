@@ -181,18 +181,18 @@ const Companies = () => {
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
           {/* Search */}
-          <Card.Root p={4}>
+          <Card p={4}>
             <Input
               placeholder="Search companies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               size="lg"
             />
-          </Card.Root>
+          </Card>
 
           {/* Stats */}
           <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            <Card.Root p={4} bg="orange.50" borderColor="orange.200" borderWidth="1px">
+            <Card p={4} bg="orange.50" borderColor="orange.200" borderWidth="1px">
               <VStack align="start">
                 <Text fontSize="sm" color="orange.600" fontWeight="medium">
                   Total Companies
@@ -201,9 +201,9 @@ const Companies = () => {
                   {companies.filter(c => c.isActive).length}
                 </Heading>
               </VStack>
-            </Card.Root>
+            </Card>
 
-            <Card.Root p={4} bg="gray.50" borderColor="gray.200" borderWidth="1px">
+            <Card p={4} bg="gray.50" borderColor="gray.200" borderWidth="1px">
               <VStack align="start">
                 <Text fontSize="sm" color="gray.600" fontWeight="medium">
                   Inactive
@@ -212,25 +212,25 @@ const Companies = () => {
                   {companies.filter(c => !c.isActive).length}
                 </Heading>
               </VStack>
-            </Card.Root>
+            </Card>
           </SimpleGrid>
 
           {/* Companies List */}
           {loading ? (
             <Text>Loading...</Text>
           ) : filteredCompanies.length === 0 ? (
-            <Card.Root p={8}>
+            <Card p={8}>
               <VStack>
                 <Text color="gray.500">No companies found</Text>
                 <Button onClick={onOpen} colorScheme="orange" mt={2}>
                   Create Your First Company
                 </Button>
               </VStack>
-            </Card.Root>
+            </Card>
           ) : (
             <VStack gap={4} align="stretch">
               {filteredCompanies.map((company) => (
-                <Card.Root key={company._id} p={6}>
+                <Card key={company._id} p={6}>
                   <HStack justify="space-between" align="start">
                     <VStack align="start" gap={2} flex={1}>
                       <HStack>
@@ -286,7 +286,7 @@ const Companies = () => {
                       )}
                     </HStack>
                   </HStack>
-                </Card.Root>
+                </Card>
               ))}
             </VStack>
           )}

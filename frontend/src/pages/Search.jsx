@@ -181,7 +181,7 @@ const Search = () => {
         </Box>
 
         {/* Search Filters */}
-        <Card.Root p={6}>
+        <Card p={6}>
           <VStack gap={4} align="stretch">
             {/* Search Term */}
             <InputGroup>
@@ -302,7 +302,7 @@ const Search = () => {
               </Button>
             </HStack>
           </VStack>
-        </Card.Root>
+        </Card>
 
         {/* Results */}
         {loading ? (
@@ -334,7 +334,7 @@ const Search = () => {
               </HStack>
 
               {results.map((update) => (
-                <Card.Root
+                <Card
                   key={`${update.type}-${update._id}`}
                   p={5}
                   cursor="pointer"
@@ -391,7 +391,7 @@ const Search = () => {
                       </Text>
                     )}
                   </VStack>
-                </Card.Root>
+                </Card>
               ))}
             </VStack>
           )

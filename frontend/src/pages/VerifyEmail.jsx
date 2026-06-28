@@ -45,7 +45,7 @@ const VerifyEmail = () => {
     return (
       <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
         <Container maxW="md">
-          <Card.Root p={8}>
+          <Card p={8}>
             <VStack gap={6}>
               <Spinner size="xl" color="blue.500" />
               <Heading size="lg">Verifying Email...</Heading>
@@ -53,7 +53,7 @@ const VerifyEmail = () => {
                 Please wait while we verify your email address
               </Text>
             </VStack>
-          </Card.Root>
+          </Card>
         </Container>
       </Box>
     );
@@ -63,7 +63,7 @@ const VerifyEmail = () => {
     return (
       <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
         <Container maxW="md">
-          <Card.Root p={8}>
+          <Card p={8}>
             <VStack gap={6}>
               <Text fontSize="5xl">✅</Text>
               <Heading size="lg" color="green.600">
@@ -83,7 +83,7 @@ const VerifyEmail = () => {
                 Go to Dashboard Now
               </Button>
             </VStack>
-          </Card.Root>
+          </Card>
         </Container>
       </Box>
     );
@@ -92,7 +92,7 @@ const VerifyEmail = () => {
   return (
     <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
       <Container maxW="md">
-        <Card.Root p={8}>
+        <Card p={8}>
           <VStack gap={6}>
             <Text fontSize="5xl">❌</Text>
             <Heading size="lg" color="red.600">
@@ -112,7 +112,7 @@ const VerifyEmail = () => {
               Back to Login
             </Button>
           </VStack>
-        </Card.Root>
+        </Card>
       </Container>
     </Box>
   );

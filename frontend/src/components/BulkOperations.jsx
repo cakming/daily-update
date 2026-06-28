@@ -281,29 +281,25 @@ const BulkOperations = ({ selectedIds, updateType, onSuccess }) => {
         </MenuButton>
         <MenuList>
           <MenuItem
-            icon="🗑️"
             onClick={() => handleBulkAction('delete')}
             color="red.600"
           >
-            Delete Selected
+            🗑️ Delete Selected
           </MenuItem>
           <MenuItem
-            icon="🏷️"
             onClick={() => handleBulkAction('assign-tags')}
           >
-            Assign Tags
+            🏷️ Assign Tags
           </MenuItem>
           <MenuItem
-            icon="🏢"
             onClick={() => handleBulkAction('assign-company')}
           >
-            Assign Company
+            🏢 Assign Company
           </MenuItem>
           <MenuItem
-            icon="📥"
             onClick={() => handleBulkAction('export')}
           >
-            Export Selected
+            📥 Export Selected
           </MenuItem>
         </MenuList>
       </Menu>

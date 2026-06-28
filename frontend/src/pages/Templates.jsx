@@ -245,7 +245,7 @@ const Templates = () => {
 
         {/* Create/Edit Form */}
         {showForm && (
-          <Card.Root p={6}>
+          <Card p={6}>
             <form onSubmit={handleSubmit}>
               <VStack spacing={4} align="stretch">
                 <Heading size="md">
@@ -345,7 +345,7 @@ const Templates = () => {
                 </HStack>
               </VStack>
             </form>
-          </Card.Root>
+          </Card>
         )}
 
         {/* Templates List */}
@@ -377,7 +377,7 @@ const Templates = () => {
             ) : (
               <VStack spacing={4} align="stretch">
                 {filteredTemplates.map((template) => (
-                  <Card.Root key={template._id} p={6}>
+                  <Card key={template._id} p={6}>
                     <VStack align="stretch" spacing={3}>
                       <HStack justify="space-between">
                         <HStack>
@@ -440,7 +440,7 @@ const Templates = () => {
                         )}
                       </HStack>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 ))}
               </VStack>
             )}

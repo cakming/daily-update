@@ -10,6 +10,11 @@ import {
   FormControl,
   FormLabel,
   Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverFooter,
   SimpleGrid,
   Checkbox,
   useToast,
@@ -133,15 +138,15 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
       </Box>
 
       {/* Tag Selector Popover */}
-      <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
-        <Popover.Trigger asChild>
+      <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} isLazy>
+        <PopoverTrigger>
           <Button variant="outline" w="full">
             Select Tags
           </Button>
-        </Popover.Trigger>
-        <Popover.Positioner>
-          <Popover.Content minW="400px" maxW="500px">
-            <Popover.Header>
+        </PopoverTrigger>
+        
+          <PopoverContent minW="400px" maxW="500px">
+            <PopoverHeader>
               <VStack align="stretch" gap={2}>
                 <Text fontWeight="bold">Select Tags</Text>
                 <Input
@@ -151,8 +156,8 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
                   size="sm"
                 />
               </VStack>
-            </Popover.Header>
-            <Popover.Body maxH="400px" overflowY="auto">
+            </PopoverHeader>
+            <PopoverBody maxH="400px" overflowY="auto">
               {loading ? (
                 <Text>Loading tags...</Text>
               ) : (
@@ -256,15 +261,15 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
                   )}
                 </VStack>
               )}
-            </Popover.Body>
-            <Popover.Footer>
+            </PopoverBody>
+            <PopoverFooter>
               <Button size="sm" onClick={() => setIsOpen(false)} w="full">
                 Done
               </Button>
-            </Popover.Footer>
-          </Popover.Content>
-        </Popover.Positioner>
-      </Popover.Root>
+            </PopoverFooter>
+          </PopoverContent>
+        
+      </Popover>
 
       <Text fontSize="xs" color="gray.500" mt={1}>
         Click on selected tags to remove them

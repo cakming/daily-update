@@ -126,7 +126,7 @@ const EmailSettings = () => {
       <Container maxW="container.lg" py={8}>
         <VStack gap={6} align="stretch">
           {/* Configuration Status */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Email Configuration Status</Heading>
 
@@ -187,10 +187,10 @@ const EmailSettings = () => {
                 Refresh Status
               </Button>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Send Test Email */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Send Test Email</Heading>
 
@@ -224,12 +224,12 @@ const EmailSettings = () => {
                 </Text>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
 
           <Divider />
 
           {/* Email Features Info */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <Heading size="md">Email Features</Heading>
 
@@ -275,10 +275,10 @@ const EmailSettings = () => {
                 </Box>
               </VStack>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* How to Use */}
-          <Card.Root p={6} bg="blue.50">
+          <Card p={6} bg="blue.50">
             <VStack align="start" gap={3}>
               <Heading size="sm">📖 How to Send Updates via Email</Heading>
               <VStack align="start" fontSize="sm" color="gray.700" gap={2}>
@@ -291,7 +291,7 @@ const EmailSettings = () => {
                 </Text>
               </VStack>
             </VStack>
-          </Card.Root>
+          </Card>
         </VStack>
       </Container>
     </Box>

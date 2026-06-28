@@ -8,6 +8,11 @@ import {
   Button,
   Input,
   Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverFooter,
   Checkbox,
   useToast,
 } from '@chakra-ui/react';
@@ -99,8 +104,8 @@ const TagFilter = ({ selectedTags = [], onChange, allowMultiple = true }) => {
     <Box>
       <HStack gap={2} flexWrap="wrap">
         {/* Filter Button */}
-        <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
-          <Popover.Trigger asChild>
+        <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} isLazy>
+          <PopoverTrigger>
             <Button variant="outline" size="sm">
               Filter by Tags
               {selectedTags.length > 0 && (
@@ -109,10 +114,10 @@ const TagFilter = ({ selectedTags = [], onChange, allowMultiple = true }) => {
                 </Badge>
               )}
             </Button>
-          </Popover.Trigger>
-          <Popover.Positioner>
-            <Popover.Content minW="350px">
-              <Popover.Header>
+          </PopoverTrigger>
+          
+            <PopoverContent minW="350px">
+              <PopoverHeader>
                 <VStack align="stretch" gap={2}>
                   <HStack justify="space-between">
                     <Text fontWeight="bold">Filter by Tags</Text>
@@ -129,8 +134,8 @@ const TagFilter = ({ selectedTags = [], onChange, allowMultiple = true }) => {
                     size="sm"
                   />
                 </VStack>
-              </Popover.Header>
-              <Popover.Body maxH="350px" overflowY="auto">
+              </PopoverHeader>
+              <PopoverBody maxH="350px" overflowY="auto">
                 {loading ? (
                   <Text>Loading tags...</Text>
                 ) : (
@@ -234,15 +239,15 @@ const TagFilter = ({ selectedTags = [], onChange, allowMultiple = true }) => {
                     )}
                   </VStack>
                 )}
-              </Popover.Body>
-              <Popover.Footer>
+              </PopoverBody>
+              <PopoverFooter>
                 <Button size="sm" onClick={() => setIsOpen(false)} w="full">
                   Apply Filter
                 </Button>
-              </Popover.Footer>
-            </Popover.Content>
-          </Popover.Positioner>
-        </Popover.Root>
+              </PopoverFooter>
+            </PopoverContent>
+          
+        </Popover>
 
         {/* Selected Tags Display */}
         {selectedTagObjects.map((tag) => (

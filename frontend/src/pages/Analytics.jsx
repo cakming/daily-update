@@ -94,7 +94,7 @@ const Analytics = () => {
   };
 
   const StatCard = ({ label, value, helpText, color = 'blue' }) => (
-    <Card.Root p={6} bg={`${color}.50`} borderColor={`${color}.200`} borderWidth="1px">
+    <Card p={6} bg={`${color}.50`} borderColor={`${color}.200`} borderWidth="1px">
       <Stat>
         <StatLabel color={`${color}.600`} fontSize="sm" fontWeight="medium">
           {label}
@@ -108,7 +108,7 @@ const Analytics = () => {
           </StatHelpText>
         )}
       </Stat>
-    </Card.Root>
+    </Card>
   );
 
   const TrendItem = ({ date, count, type }) => (
@@ -213,7 +213,7 @@ const Analytics = () => {
       <Container maxW="7xl" py={8}>
         <VStack gap={6} align="stretch">
           {/* Filters */}
-          <Card.Root p={4}>
+          <Card p={4}>
             <VStack gap={4} align="stretch">
               <Heading size="sm">Filters</Heading>
               <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
@@ -243,14 +243,14 @@ const Analytics = () => {
                 </FormControl>
               </SimpleGrid>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {loading ? (
-            <Card.Root p={8}>
+            <Card p={8}>
               <Text textAlign="center" color="gray.500">
                 Loading analytics...
               </Text>
-            </Card.Root>
+            </Card>
           ) : dashboardData ? (
             <>
               {/* Overview Stats */}
@@ -317,7 +317,7 @@ const Analytics = () => {
 
               {/* Company Breakdown */}
               {dashboardData.byCompany && dashboardData.byCompany.length > 0 && (
-                <Card.Root p={6}>
+                <Card p={6}>
                   <VStack align="stretch" gap={4}>
                     <Heading size="md">Updates by Company</Heading>
                     <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
@@ -357,14 +357,14 @@ const Analytics = () => {
                       ))}
                     </SimpleGrid>
                   </VStack>
-                </Card.Root>
+                </Card>
               )}
 
               {/* Charts Section */}
               {trendsData && (trendsData.daily?.length > 0 || trendsData.weekly?.length > 0) && (
                 <>
                   {/* Combined Trend Chart */}
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="stretch" gap={4}>
                       <Heading size="md">Activity Trends Over Time</Heading>
                       <Box h="300px">
@@ -407,10 +407,10 @@ const Analytics = () => {
                         </ResponsiveContainer>
                       </Box>
                     </VStack>
-                  </Card.Root>
+                  </Card>
 
                   {/* Area Chart - Cumulative Updates */}
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="stretch" gap={4}>
                       <Heading size="md">Cumulative Updates</Heading>
                       <Box h="300px">
@@ -461,7 +461,7 @@ const Analytics = () => {
                         </ResponsiveContainer>
                       </Box>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 </>
               )}
 
@@ -469,7 +469,7 @@ const Analytics = () => {
               {dashboardData.byCompany && dashboardData.byCompany.length > 0 && (
                 <SimpleGrid columns={{ base: 1, lg: 2 }} gap={4}>
                   {/* Bar Chart */}
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="stretch" gap={4}>
                       <Heading size="md">Updates by Company</Heading>
                       <Box h="300px">
@@ -497,10 +497,10 @@ const Analytics = () => {
                         </ResponsiveContainer>
                       </Box>
                     </VStack>
-                  </Card.Root>
+                  </Card>
 
                   {/* Pie Chart */}
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="stretch" gap={4}>
                       <Heading size="md">Update Distribution</Heading>
                       <Box h="300px">
@@ -528,12 +528,12 @@ const Analytics = () => {
                         </ResponsiveContainer>
                       </Box>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 </SimpleGrid>
               )}
             </>
           ) : (
-            <Card.Root p={8}>
+            <Card p={8}>
               <VStack>
                 <Text color="gray.500" fontSize="lg">
                   No analytics data available
@@ -542,7 +542,7 @@ const Analytics = () => {
                   Try adjusting your filters or create some updates first
                 </Text>
               </VStack>
-            </Card.Root>
+            </Card>
           )}
         </VStack>
       </Container>

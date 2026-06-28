@@ -69,7 +69,7 @@ const ForgotPassword = () => {
     return (
       <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
         <Container maxW="md">
-          <Card.Root p={8}>
+          <Card p={8}>
             <VStack gap={6} align="stretch">
               <VStack gap={2}>
                 <Text fontSize="4xl">📧</Text>
@@ -103,7 +103,7 @@ const ForgotPassword = () => {
                 </Button>
               </VStack>
             </VStack>
-          </Card.Root>
+          </Card>
         </Container>
       </Box>
     );
@@ -112,7 +112,7 @@ const ForgotPassword = () => {
   return (
     <Box minH="100vh" bg="gray.50" display="flex" alignItems="center" justifyContent="center">
       <Container maxW="md">
-        <Card.Root p={8}>
+        <Card p={8}>
           <form onSubmit={handleSubmit}>
             <VStack gap={6} align="stretch">
               <VStack gap={2}>
@@ -151,7 +151,7 @@ const ForgotPassword = () => {
               </Text>
             </VStack>
           </form>
-        </Card.Root>
+        </Card>
       </Container>
     </Box>
   );

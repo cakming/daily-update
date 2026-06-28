@@ -1,6 +1,6 @@
 import { getTransporter, emailTemplates, verifyEmailConfig } from '../config/email.js';
-import DailyUpdate from '../models/DailyUpdate.js';
-import WeeklyUpdate from '../models/WeeklyUpdate.js';
+import DailyUpdate from '../models/Update.js';
+import WeeklyUpdate from '../models/Update.js';
 import User from '../models/User.js';
 
 /**
