@@ -113,15 +113,15 @@ const Login = () => {
             Daily Update App
           </Heading>
 
-          <Card.Root w="full" p={8}>
-            <Tabs.Root defaultValue="login">
+          <Card w="full" p={8}>
+            <Tabs>
               <TabList>
-                <Tabs.Trigger value="login">Login</Tabs.Trigger>
-                <Tabs.Trigger value="register">Register</Tabs.Trigger>
+                <Tab>Login</Tab>
+                <Tab>Register</Tab>
               </TabList>
 
               <TabPanels>
-                <TabPanel value="login">
+                <TabPanel>
                   <form onSubmit={handleLogin}>
                     <VStack gap={4}>
                       <FormControl isRequired>
@@ -207,7 +207,7 @@ const Login = () => {
                         type="submit"
                         colorScheme="blue"
                         w="full"
-                        loading={loading}
+                        isLoading={loading}
                         mt={4}
                         isDisabled={require2FA && !twoFactorToken}
                       >
@@ -217,7 +217,7 @@ const Login = () => {
                   </form>
                 </TabPanel>
 
-                <TabPanel value="register">
+                <TabPanel>
                   <form onSubmit={handleRegister}>
                     <VStack gap={4}>
                       <FormControl isRequired>
@@ -264,7 +264,7 @@ const Login = () => {
                         type="submit"
                         colorScheme="blue"
                         w="full"
-                        loading={loading}
+                        isLoading={loading}
                         mt={4}
                       >
                         Register
@@ -273,8 +273,8 @@ const Login = () => {
                   </form>
                 </TabPanel>
               </TabPanels>
-            </Tabs.Root>
-          </Card.Root>
+            </Tabs>
+          </Card>
         </VStack>
       </Container>
     </Box>

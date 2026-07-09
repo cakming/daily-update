@@ -299,7 +299,7 @@ const Schedules = () => {
           ) : (
             <SimpleGrid columns={{ base: 1, lg: 2 }} gap={4}>
               {schedules.map((schedule) => (
-                <Card.Root key={schedule._id} p={5}>
+                <Card key={schedule._id} p={5}>
                   <VStack align="start" gap={3}>
                     <HStack justifyContent="space-between" w="full">
                       <HStack gap={2}>
@@ -378,7 +378,7 @@ const Schedules = () => {
                       </Button>
                     </HStack>
                   </VStack>
-                </Card.Root>
+                </Card>
               ))}
             </SimpleGrid>
           )}

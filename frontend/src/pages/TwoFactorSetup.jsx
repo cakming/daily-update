@@ -12,6 +12,9 @@ import {
   Input,
   
   Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
   Code,
   SimpleGrid,
   FormControl,
@@ -175,9 +178,9 @@ const TwoFactorSetup = () => {
     return (
       <Box minH="100vh" bg="gray.50" py={8}>
         <Container maxW="2xl">
-          <Card.Root p={8}>
+          <Card p={8}>
             <Text textAlign="center">Loading...</Text>
-          </Card.Root>
+          </Card>
         </Container>
       </Box>
     );
@@ -186,7 +189,7 @@ const TwoFactorSetup = () => {
   return (
     <Box minH="100vh" bg="gray.50" py={8}>
       <Container maxW="2xl">
-        <Card.Root p={8}>
+        <Card p={8}>
           <VStack gap={6} align="stretch">
             <HStack justify="space-between">
               <Heading size="lg">Two-Factor Authentication</Heading>
@@ -198,15 +201,15 @@ const TwoFactorSetup = () => {
             {/* Step 1: Introduction */}
             {step === 1 && (
               <VStack gap={4} align="stretch">
-                <Alert.Root status="info">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>Secure Your Account</Alert.Title>
-                    <Alert.Description>
+                <Alert status="info">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Secure Your Account</AlertTitle>
+                    <AlertDescription>
                       Add an extra layer of security by enabling two-factor authentication (2FA)
-                    </Alert.Description>
-                  </Alert.Content>
-                </Alert.Root>
+                    </AlertDescription>
+                  </Box>
+                </Alert>
 
                 <Text>
                   Two-factor authentication adds an additional layer of security to your account by
@@ -246,15 +249,15 @@ const TwoFactorSetup = () => {
             {/* Step 2: Scan QR Code */}
             {step === 2 && (
               <VStack gap={4} align="stretch">
-                <Alert.Root status="info">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>Step 1: Scan QR Code</Alert.Title>
-                    <Alert.Description>
+                <Alert status="info">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Step 1: Scan QR Code</AlertTitle>
+                    <AlertDescription>
                       Use your authenticator app to scan this QR code
-                    </Alert.Description>
-                  </Alert.Content>
-                </Alert.Root>
+                    </AlertDescription>
+                  </Box>
+                </Alert>
 
                 <Flex justify="center" my={4}>
                   {qrCode && (
@@ -315,15 +318,15 @@ const TwoFactorSetup = () => {
             {/* Step 3: Backup Codes */}
             {step === 3 && (
               <VStack gap={4} align="stretch">
-                <Alert.Root status="success">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>2FA Enabled Successfully!</Alert.Title>
-                    <Alert.Description>
+                <Alert status="success">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>2FA Enabled Successfully!</AlertTitle>
+                    <AlertDescription>
                       Save these backup codes in a secure location
-                    </Alert.Description>
-                  </Alert.Content>
-                </Alert.Root>
+                    </AlertDescription>
+                  </Box>
+                </Alert>
 
                 <Box bg="yellow.50" p={4} borderRadius="md" borderWidth="1px" borderColor="yellow.200">
                   <Text fontWeight="bold" color="yellow.800" mb={2}>
@@ -361,15 +364,15 @@ const TwoFactorSetup = () => {
             {/* Step 4: Already Enabled */}
             {step === 4 && (
               <VStack gap={4} align="stretch">
-                <Alert.Root status="success">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>2FA is Active</Alert.Title>
-                    <Alert.Description>
+                <Alert status="success">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>2FA is Active</AlertTitle>
+                    <AlertDescription>
                       Your account is protected with two-factor authentication
-                    </Alert.Description>
-                  </Alert.Content>
-                </Alert.Root>
+                    </AlertDescription>
+                  </Box>
+                </Alert>
 
                 <Box bg="gray.50" p={4} borderRadius="md">
                   <Text fontSize="sm">
@@ -378,16 +381,16 @@ const TwoFactorSetup = () => {
                   </Text>
                 </Box>
 
-                <Alert.Root status="warning">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Title>Disable 2FA</Alert.Title>
-                    <Alert.Description>
+                <Alert status="warning">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Disable 2FA</AlertTitle>
+                    <AlertDescription>
                       Disabling 2FA will make your account less secure. You'll only need your
                       password to log in.
-                    </Alert.Description>
-                  </Alert.Content>
-                </Alert.Root>
+                    </AlertDescription>
+                  </Box>
+                </Alert>
 
                 <HStack>
                   <Button onClick={() => navigate('/profile')} flex={1}>
@@ -405,7 +408,7 @@ const TwoFactorSetup = () => {
               </VStack>
             )}
           </VStack>
-        </Card.Root>
+        </Card>
       </Container>
     </Box>
   );

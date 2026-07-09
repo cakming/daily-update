@@ -91,16 +91,16 @@ const ExportButton = ({ filters = {} }) => {
         📥 Export
       </MenuButton>
       <MenuList>
-        <MenuItem icon="📄" onClick={() => handleExport('csv')}>
+        <MenuItem onClick={() => handleExport('csv')}>📄 
           Export as CSV
         </MenuItem>
-        <MenuItem icon="📋" onClick={() => handleExport('json')}>
+        <MenuItem onClick={() => handleExport('json')}>📋 
           Export as JSON
         </MenuItem>
-        <MenuItem icon="📝" onClick={() => handleExport('markdown')}>
+        <MenuItem onClick={() => handleExport('markdown')}>📝 
           Export as Markdown
         </MenuItem>
-        <MenuItem icon="📕" onClick={() => handleExport('pdf')}>
+        <MenuItem onClick={() => handleExport('pdf')}>📕 
           Export as PDF
         </MenuItem>
       </MenuList>

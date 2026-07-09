@@ -30,11 +30,16 @@ Create a comprehensive client communication platform that transforms technical u
 - ✅ Comprehensive documentation
 - ✅ Testing infrastructure in place
 
-### 🔄 Phase 1.5: Testing & Quality Assurance (In Progress - Nov 2025)
+### 🔄 Phase 1.5: Testing & Quality Assurance (In Progress)
 
 **Goal:** Achieve production-ready quality with comprehensive testing
 
+> Update (2026-07-09): the test harness was broken and has been repaired; all 22
+> pages now have render smoke tests and the frontend suite passes. Coverage is
+> still well under the 80% targets below.
+
 **Deliverables:**
+- [x] Test harness runnable + render smoke tests for every page
 - [ ] 80%+ backend test coverage
 - [ ] 80%+ frontend test coverage
 - [ ] E2E tests for critical flows
@@ -61,7 +66,7 @@ Create a comprehensive client communication platform that transforms technical u
 - [ ] Frontend deployment (Vercel/Netlify)
 - [ ] SSL certificates configured
 - [ ] Environment variables secured
-- [ ] Error logging (Sentry)
+- [x] Error logging (Sentry) — integrated (`config/sentry.js`)
 - [ ] Monitoring setup
 - [ ] Backup strategy implemented
 - [ ] CI/CD pipeline

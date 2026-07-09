@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import User from '../models/User.js';
-import DailyUpdate from '../models/DailyUpdate.js';
-import WeeklyUpdate from '../models/WeeklyUpdate.js';
+import DailyUpdate from '../models/Update.js';
+import WeeklyUpdate from '../models/Update.js';
 import { subDays } from 'date-fns';
 
 /**

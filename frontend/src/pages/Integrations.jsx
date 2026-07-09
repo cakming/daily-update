@@ -343,7 +343,7 @@ const Integrations = () => {
               {/* Telegram Tab */}
               <TabPanel>
                 <VStack gap={6} align="stretch">
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="start" gap={4}>
                       <HStack justify="space-between" w="full">
                         <VStack align="start" gap={1}>
@@ -445,14 +445,14 @@ const Integrations = () => {
                         </VStack>
                       )}
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 </VStack>
               </TabPanel>
 
               {/* Google Chat Tab */}
               <TabPanel>
                 <VStack gap={6} align="stretch">
-                  <Card.Root p={6}>
+                  <Card p={6}>
                     <VStack align="start" gap={4}>
                       <HStack justify="space-between" w="full">
                         <VStack align="start" gap={1}>
@@ -549,7 +549,7 @@ const Integrations = () => {
                         </VStack>
                       )}
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 </VStack>
               </TabPanel>
             </TabPanels>

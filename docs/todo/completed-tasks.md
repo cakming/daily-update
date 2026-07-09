@@ -1,8 +1,42 @@
 # Completed Tasks
 
-**Last Updated:** 2025-11-06
+**Last Updated:** 2026-07-09
 
 This document tracks all completed tasks and features for the Daily Update App project.
+
+---
+
+## July 2026
+
+### ✅ Stabilization pass — made the app actually run
+**Completed:** Jul 9, 2026
+
+The app was documented as "production-ready" but did not run: the backend crashed
+on startup and 16 of 21 pages rendered blank. This pass fixed that end to end.
+
+**Backend**
+- Fixed broken model imports (`models/DailyUpdate.js` / `WeeklyUpdate.js` → the real
+  `Update.js`) in `emailController`, `scheduler`, and `telegramBot` — the server now boots.
+- Replaced the retired `claude-3-5-sonnet-20241022` with `claude-sonnet-5`, made it
+  configurable via `ANTHROPIC_MODEL`, and disabled adaptive thinking so output isn't
+  truncated.
+- Removed the `via.placeholder.com` header images from Google Chat cards (the webhook is
+  a per-user setting in the Integrations UI).
+
+**Frontend**
+- Completed the Chakra UI v3→v2 migration across 16 files (`Card.Root`→`Card`, `Tabs`,
+  `Alert`, `Popover`, `Modal`, and the `MenuItem icon` string crash).
+- Fixed the `Button loading` → `isLoading` prop and `IconButton` string icons.
+- Added an app-wide `ErrorBoundary` so render crashes surface instead of blanking.
+
+**Tests & tooling**
+- Repaired the non-functional test harness (vitest `setupFiles` pointed at a missing
+  path; `test-utils` used the Chakra v3 provider API on a v2 install).
+- Added render smoke tests for all 22 pages; full frontend suite passes.
+
+**Docs**
+- Corrected the false "production-ready / 71% coverage" claims in the README, added a
+  `DEVELOPMENT.md` local-run guide, and refreshed the todo trackers.
 
 ---
 

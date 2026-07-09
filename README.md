@@ -2,22 +2,43 @@
 
 A professional client communication tool that transforms technical team updates into client-friendly daily and weekly reports using AI.
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-success)](./PRODUCTION_SETUP.md)
-[![Test Coverage](https://img.shields.io/badge/coverage-71%25-green)]()
-[![License](https://img.shields.io/badge/license-MIT-blue)]()
+[![Status](https://img.shields.io/badge/status-beta%20%2F%20in%20development-yellow)](./DEVELOPMENT.md)
+[![License](https://img.shields.io/badge/license-ISC-blue)]()
 
-## 🚀 Production Ready
+## 🚧 Status
 
-This app is **production-ready** and can be deployed in ~15 minutes!
+The app has a broad feature set (see [Features](#-features)) and deployment
+configs, but it is **not yet production-ready**. Treat it as **beta / in
+active development**.
 
-- ✅ Complete feature set with AI-powered updates
-- ✅ Comprehensive test coverage (71% backend, E2E tests)
-- ✅ Security hardened (JWT, rate limiting, CORS)
-- ✅ Full deployment documentation
-- ✅ Error tracking configured (Sentry)
-- ✅ Estimated cost: $5-15/month
+- ✅ Full feature surface implemented (auth, updates, teams, integrations, analytics)
+- ✅ Deployment configs for Railway/Render/Fly.io + Vercel/Netlify
+- ✅ Every page renders (all 22 pages have a render smoke test); the test harness runs
+- ⚠️ Test coverage is still partial — smoke + auth tests pass, but it is well under 80%
+- ⚠️ A few rough edges remain — see **[Known Issues](#-known-issues)** below
 
-**Quick Deploy:** See [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) or [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)
+**Run it locally:** see **[DEVELOPMENT.md](./DEVELOPMENT.md)** for a full local setup
+(including a zero-dependency in-memory MongoDB option).
+
+## ⚠️ Known Issues
+
+- **Chakra UI v2** — the codebase targets Chakra **v2** (see `package.json`). Do not
+  reintroduce v3 dotted-component syntax (`Card.Root`, `Tabs.Trigger`, `Modal.Root`,
+  etc.); it resolves to `undefined` on v2 and blanks the page. The page render smoke
+  tests (`src/__tests__/pages/`) guard against this.
+- **Test coverage is thin** — the harness works and every page has a render smoke test,
+  but there is little behavioral/unit coverage yet.
+
+### Resolved
+- ~~Backend crashed on startup~~ — the `models/DailyUpdate.js` / `WeeklyUpdate.js`
+  imports were fixed to `Update.js`.
+- ~~16 pages rendered blank~~ — completed the Chakra v3→v2 migration and added an
+  app-wide error boundary so future render failures surface instead of blanking.
+- ~~AI model was retired~~ — now `claude-sonnet-5`, overridable via `ANTHROPIC_MODEL`.
+- ~~Google Chat placeholder images~~ — removed; the webhook is configured per-user in
+  the Integrations UI (no env config needed).
+- ~~Auth rate limiter concern~~ — verified: the strict 5/15min limiter is scoped to
+  login/register/reset/2FA routes only; `GET /me` is not under it.
 
 ## Overview
 

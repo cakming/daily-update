@@ -186,8 +186,8 @@ No major issues reported`
 
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2000
+          model: 'claude-sonnet-5',
+          max_tokens: 3000
         })
       );
     });
@@ -445,8 +445,8 @@ No major challenges this week`
 
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 2500 // Higher than daily updates (2000)
+          model: 'claude-sonnet-5',
+          max_tokens: 3500 // Higher than daily updates (3000)
         })
       );
     });

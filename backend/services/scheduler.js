@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import ScheduledUpdate from '../models/ScheduledUpdate.js';
 import ScheduleHistory from '../models/ScheduleHistory.js';
-import DailyUpdate from '../models/DailyUpdate.js';
-import WeeklyUpdate from '../models/WeeklyUpdate.js';
+import DailyUpdate from '../models/Update.js';
+import WeeklyUpdate from '../models/Update.js';
 import User from '../models/User.js';
 import { getTransporter, emailTemplates } from '../config/email.js';
 import { subDays } from 'date-fns';

@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { theme } from '../theme';
 import { AuthProvider } from '../context/AuthContext';
 
 // Custom render function that includes all providers
@@ -15,7 +16,7 @@ export function renderWithProviders(ui, options = {}) {
 
   function Wrapper({ children }) {
     return (
-      <ChakraProvider value={defaultSystem}>
+      <ChakraProvider theme={theme}>
         <BrowserRouter>
           <AuthProvider>
             {children}

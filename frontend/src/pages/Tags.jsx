@@ -19,6 +19,11 @@ import {
   Flex,
   IconButton,
   Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
   Tabs,
   useToast,
 } from '@chakra-ui/react';
@@ -222,7 +227,7 @@ const Tags = () => {
           {/* Stats */}
           {tagStats && (
             <SimpleGrid columns={{ base: 1, md: 4 }} gap={4}>
-              <Card.Root p={4}>
+              <Card p={4}>
                 <VStack align="start">
                   <Text fontSize="sm" color="gray.600">
                     Total Tags
@@ -231,8 +236,8 @@ const Tags = () => {
                     {tagStats.totalTags}
                   </Heading>
                 </VStack>
-              </Card.Root>
-              <Card.Root p={4}>
+              </Card>
+              <Card p={4}>
                 <VStack align="start">
                   <Text fontSize="sm" color="gray.600">
                     Project Tags
@@ -241,8 +246,8 @@ const Tags = () => {
                     {tagStats.tagsByCategory.project}
                   </Heading>
                 </VStack>
-              </Card.Root>
-              <Card.Root p={4}>
+              </Card>
+              <Card p={4}>
                 <VStack align="start">
                   <Text fontSize="sm" color="gray.600">
                     Priority Tags
@@ -251,8 +256,8 @@ const Tags = () => {
                     {tagStats.tagsByCategory.priority}
                   </Heading>
                 </VStack>
-              </Card.Root>
-              <Card.Root p={4}>
+              </Card>
+              <Card p={4}>
                 <VStack align="start">
                   <Text fontSize="sm" color="gray.600">
                     Status Tags
@@ -261,12 +266,12 @@ const Tags = () => {
                     {tagStats.tagsByCategory.status}
                   </Heading>
                 </VStack>
-              </Card.Root>
+              </Card>
             </SimpleGrid>
           )}
 
           {/* Category Filter */}
-          <Card.Root p={4}>
+          <Card p={4}>
             <HStack>
               <Text fontWeight="medium">Filter by Category:</Text>
               <Select
@@ -282,10 +287,10 @@ const Tags = () => {
                 ))}
               </Select>
             </HStack>
-          </Card.Root>
+          </Card>
 
           {/* Tags List */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="stretch" gap={4}>
               <Heading size="md">Your Tags</Heading>
 
@@ -310,7 +315,7 @@ const Tags = () => {
               ) : (
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
                   {tags.map((tag) => (
-                    <Card.Root key={tag._id} p={4} borderLeftWidth={4} borderLeftColor={tag.color}>
+                    <Card key={tag._id} p={4} borderLeftWidth={4} borderLeftColor={tag.color}>
                       <VStack align="stretch" gap={2}>
                         <HStack justify="space-between">
                           <HStack>
@@ -346,24 +351,24 @@ const Tags = () => {
                           </Button>
                         </HStack>
                       </VStack>
-                    </Card.Root>
+                    </Card>
                   ))}
                 </SimpleGrid>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
         </VStack>
       </Container>
 
       {/* Create/Edit Modal */}
-      <Modal.Root open={isCreateModalOpen} onOpenChange={() => setIsCreateModalOpen(false)}>
-        <Modal.Backdrop />
-        <Modal.Positioner>
-          <Modal.Content>
-            <Modal.Header>
-              <Modal.Title>{editingTag ? 'Edit Tag' : 'Create New Tag'}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)}>
+        <ModalOverlay />
+        
+          <ModalContent>
+            <ModalHeader>
+              <Box>{editingTag ? 'Edit Tag' : 'Create New Tag'}</Box>
+            </ModalHeader><ModalCloseButton />
+            <ModalBody pb={6}>
               <form onSubmit={handleSubmit}>
                 <VStack gap={4} align="stretch">
                   <FormControl isRequired>
@@ -424,10 +429,10 @@ const Tags = () => {
                   </HStack>
                 </VStack>
               </form>
-            </Modal.Body>
-          </Modal.Content>
-        </Modal.Positioner>
-      </Modal.Root>
+            </ModalBody>
+          </ModalContent>
+        
+      </Modal>
     </Box>
   );
 };

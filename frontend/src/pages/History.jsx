@@ -38,6 +38,7 @@ import TagFilter from '../components/TagFilter';
 import ExportButton from '../components/ExportButton';
 import BulkOperations from '../components/BulkOperations';
 import EmailModal from '../components/EmailModal';
+import { CardSkeleton } from '../components/LoadingStates';
 import { format, subDays } from 'date-fns';
 
 const History = () => {
@@ -496,7 +497,9 @@ const History = () => {
             <TabPanels>
               <TabPanel>
                 {loading ? (
-                  <Text>Loading...</Text>
+                  <VStack gap={4} align="stretch" mt={4}>
+                    <CardSkeleton count={3} />
+                  </VStack>
                 ) : filterUpdates(dailyUpdates).length === 0 ? (
                   <Card p={8}>
                     <VStack>
@@ -521,7 +524,9 @@ const History = () => {
 
               <TabPanel>
                 {loading ? (
-                  <Text>Loading...</Text>
+                  <VStack gap={4} align="stretch" mt={4}>
+                    <CardSkeleton count={3} />
+                  </VStack>
                 ) : filterUpdates(weeklyUpdates).length === 0 ? (
                   <Card p={8}>
                     <VStack>

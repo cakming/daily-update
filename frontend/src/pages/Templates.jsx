@@ -20,6 +20,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { templateAPI } from '../services/api';
+import { CardSkeleton } from '../components/LoadingStates';
 
 const Templates = () => {
   const navigate = useNavigate();
@@ -245,7 +246,7 @@ const Templates = () => {
 
         {/* Create/Edit Form */}
         {showForm && (
-          <Card.Root p={6}>
+          <Card p={6}>
             <form onSubmit={handleSubmit}>
               <VStack spacing={4} align="stretch">
                 <Heading size="md">
@@ -345,16 +346,16 @@ const Templates = () => {
                 </HStack>
               </VStack>
             </form>
-          </Card.Root>
+          </Card>
         )}
 
         {/* Templates List */}
         {!showForm && (
           <>
             {loading ? (
-              <Center py={12}>
-                <Spinner size="xl" color="teal.500" />
-              </Center>
+              <VStack spacing={4} align="stretch">
+                <CardSkeleton count={3} />
+              </VStack>
             ) : filteredTemplates.length === 0 ? (
               <Center py={12}>
                 <VStack>
@@ -377,7 +378,7 @@ const Templates = () => {
             ) : (
               <VStack spacing={4} align="stretch">
                 {filteredTemplates.map((template) => (
-                  <Card.Root key={template._id} p={6}>
+                  <Card key={template._id} p={6}>
                     <VStack align="stretch" spacing={3}>
                       <HStack justify="space-between">
                         <HStack>
@@ -440,7 +441,7 @@ const Templates = () => {
                         )}
                       </HStack>
                     </VStack>
-                  </Card.Root>
+                  </Card>
                 ))}
               </VStack>
             )}

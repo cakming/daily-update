@@ -374,7 +374,7 @@ const Teams = () => {
                                     <Td>
                                       {member.role !== 'owner' && (
                                         <IconButton
-                                          icon="🗑️"
+                                          icon={<span>🗑️</span>}
                                           size="sm"
                                           variant="ghost"
                                           colorScheme="red"

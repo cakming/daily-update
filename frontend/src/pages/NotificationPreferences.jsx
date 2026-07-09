@@ -203,7 +203,7 @@ const NotificationPreferences = () => {
           </Alert>
 
           {/* Email Notifications */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <HStack justify="space-between" w="full">
                 <VStack align="start" gap={1}>
@@ -288,10 +288,10 @@ const NotificationPreferences = () => {
                 </VStack>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* In-App Notifications */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <HStack justify="space-between" w="full">
                 <VStack align="start" gap={1}>
@@ -392,10 +392,10 @@ const NotificationPreferences = () => {
                 </VStack>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Bot Notifications */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <VStack align="start" gap={1} w="full">
                 <Heading size="md">🤖 Bot Notifications</Heading>
@@ -485,10 +485,10 @@ const NotificationPreferences = () => {
                 </FormControl>
               </VStack>
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Quiet Hours */}
-          <Card.Root p={6}>
+          <Card p={6}>
             <VStack align="start" gap={4}>
               <HStack justify="space-between" w="full">
                 <VStack align="start" gap={1}>
@@ -549,7 +549,7 @@ const NotificationPreferences = () => {
                 </SimpleGrid>
               )}
             </VStack>
-          </Card.Root>
+          </Card>
 
           {/* Action Buttons */}
           <HStack justify="space-between">

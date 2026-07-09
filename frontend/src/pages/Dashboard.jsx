@@ -171,7 +171,7 @@ const Dashboard = () => {
 
           <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={6}>
             {cards.map((card, index) => (
-              <Card.Root
+              <Card
                 key={index}
                 p={6}
                 cursor="pointer"
@@ -201,12 +201,12 @@ const Dashboard = () => {
                     Get Started
                   </Button>
                 </VStack>
-              </Card.Root>
+              </Card>
             ))}
           </SimpleGrid>
 
           {/* Quick Stats */}
-          <Card.Root p={6} mt={4}>
+          <Card p={6} mt={4}>
             <VStack align="start" gap={4}>
               <Heading size="md">Quick Tips</Heading>
               <VStack align="start" gap={2} pl={4}>
@@ -224,7 +224,7 @@ const Dashboard = () => {
                 </Text>
               </VStack>
             </VStack>
-          </Card.Root>
+          </Card>
         </VStack>
       </Container>
     </Box>

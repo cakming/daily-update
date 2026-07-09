@@ -5,6 +5,17 @@
 
 ---
 
+> ⚠️ **Correction (2026-07-09):** The "feature-complete / production-ready /
+> 0 issues" conclusions below were **inaccurate**. A later run revealed the app
+> did **not** boot (broken `models/DailyUpdate.js`/`WeeklyUpdate.js` imports) and
+> **16 of 21 pages rendered blank** due to Chakra UI v3 syntax on a v2 install.
+> Those have since been fixed, and an app-wide error boundary was added so future
+> render failures are visible instead of silent. Remaining items are tracked in
+> the README's **Known Issues** section and **DEVELOPMENT.md**. Read this document
+> as historical context, not current status.
+
+---
+
 ## 🎉 Executive Summary
 
 **Application Status:** ✅ **FEATURE-COMPLETE** for MVP+
