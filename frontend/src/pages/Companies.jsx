@@ -26,6 +26,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { companyAPI } from '../services/api';
+import { ListSkeleton } from '../components/LoadingStates';
 
 const Companies = () => {
   const navigate = useNavigate();
@@ -217,7 +218,7 @@ const Companies = () => {
 
           {/* Companies List */}
           {loading ? (
-            <Text>Loading...</Text>
+            <ListSkeleton count={4} />
           ) : filteredCompanies.length === 0 ? (
             <Card p={8}>
               <VStack>

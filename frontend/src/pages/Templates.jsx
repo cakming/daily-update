@@ -20,6 +20,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { templateAPI } from '../services/api';
+import { CardSkeleton } from '../components/LoadingStates';
 
 const Templates = () => {
   const navigate = useNavigate();
@@ -352,9 +353,9 @@ const Templates = () => {
         {!showForm && (
           <>
             {loading ? (
-              <Center py={12}>
-                <Spinner size="xl" color="teal.500" />
-              </Center>
+              <VStack spacing={4} align="stretch">
+                <CardSkeleton count={3} />
+              </VStack>
             ) : filteredTemplates.length === 0 ? (
               <Center py={12}>
                 <VStack>

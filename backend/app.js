@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger.js';
 import authRoutes from './routes/auth.js';
 import dailyUpdateRoutes from './routes/dailyUpdates.js';
 import weeklyUpdateRoutes from './routes/weeklyUpdates.js';
@@ -69,6 +71,14 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/schedule-history', scheduleHistoryRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/teams', teamRoutes);
+
+// API documentation (Swagger UI + raw spec)
+// Mounted outside the `/api/` rate limiter and before the 404 handler.
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

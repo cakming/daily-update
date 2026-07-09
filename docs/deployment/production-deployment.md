@@ -262,6 +262,11 @@ VITE_API_URL=https://your-backend-domain.com/api
 
 ## Monitoring and Maintenance
 
+> **See also:** [Monitoring & Backups](./monitoring-and-backups.md) for a
+> concrete, stack-specific runbook covering UptimeRobot health checks, Sentry
+> configuration, MongoDB Atlas automated backups, manual `mongodump` /
+> `mongorestore` procedures, and log retention.
+
 ### Error Logging
 
 Add error logging service like Sentry:
