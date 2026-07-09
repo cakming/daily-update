@@ -13,24 +13,32 @@ active development**.
 
 - ✅ Full feature surface implemented (auth, updates, teams, integrations, analytics)
 - ✅ Deployment configs for Railway/Render/Fly.io + Vercel/Netlify
-- ⚠️ Test coverage is partial and unverified — do not rely on the old "71%" figure
-- ⚠️ Some rough edges remain — see **[Known Issues](#-known-issues)** below
+- ✅ Every page renders (all 22 pages have a render smoke test); the test harness runs
+- ⚠️ Test coverage is still partial — smoke + auth tests pass, but it is well under 80%
+- ⚠️ A few rough edges remain — see **[Known Issues](#-known-issues)** below
 
 **Run it locally:** see **[DEVELOPMENT.md](./DEVELOPMENT.md)** for a full local setup
 (including a zero-dependency in-memory MongoDB option).
 
 ## ⚠️ Known Issues
 
-- **Auth rate limiter is strict** — `/api/auth` (including `/me`, called on every
-  page load) is capped at 5 requests / 15 min, which can log active users out.
-  Consider raising it or exempting `/me`.
-- **Google Chat cards** use `via.placeholder.com` placeholder images
-  (`backend/services/googleChat.js`).
-- **AI model** is pinned to `claude-3-5-sonnet-20241022`; consider updating to a
-  current Claude model in `backend/services/claudeService.js`.
-- **Chakra UI** — the codebase targets Chakra **v2** (see `package.json`). Do not
-  reintroduce v3 dotted-component syntax (`Card.Root`, `Tabs.Trigger`, etc.); it
-  resolves to `undefined` on v2 and blanks the page.
+- **Chakra UI v2** — the codebase targets Chakra **v2** (see `package.json`). Do not
+  reintroduce v3 dotted-component syntax (`Card.Root`, `Tabs.Trigger`, `Modal.Root`,
+  etc.); it resolves to `undefined` on v2 and blanks the page. The page render smoke
+  tests (`src/__tests__/pages/`) guard against this.
+- **Test coverage is thin** — the harness works and every page has a render smoke test,
+  but there is little behavioral/unit coverage yet.
+
+### Resolved
+- ~~Backend crashed on startup~~ — the `models/DailyUpdate.js` / `WeeklyUpdate.js`
+  imports were fixed to `Update.js`.
+- ~~16 pages rendered blank~~ — completed the Chakra v3→v2 migration and added an
+  app-wide error boundary so future render failures surface instead of blanking.
+- ~~AI model was retired~~ — now `claude-sonnet-5`, overridable via `ANTHROPIC_MODEL`.
+- ~~Google Chat placeholder images~~ — removed; the webhook is configured per-user in
+  the Integrations UI (no env config needed).
+- ~~Auth rate limiter concern~~ — verified: the strict 5/15min limiter is scoped to
+  login/register/reset/2FA routes only; `GET /me` is not under it.
 
 ## Overview
 

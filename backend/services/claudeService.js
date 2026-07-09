@@ -4,10 +4,11 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Model is configurable via env; defaults to the current Sonnet tier.
-// `thinking: disabled` keeps output direct (Sonnet 5 runs adaptive thinking by
-// default, which would otherwise consume the max_tokens budget).
-const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-5';
+// Model is configurable via the ANTHROPIC_MODEL env var (see .env examples);
+// defaults to the current Sonnet tier. `thinking: disabled` keeps output direct
+// (Sonnet 5 runs adaptive thinking by default, which would otherwise consume
+// the max_tokens budget).
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 
 /**
  * Process technical update text and convert to client-friendly format

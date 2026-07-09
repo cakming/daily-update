@@ -1,7 +1,25 @@
 # Current Tasks
 
-**Last Updated:** 2025-11-06
-**Sprint:** Week 1
+**Last Updated:** 2026-07-09
+**Sprint:** Stabilization
+
+## ✅ Recently Completed (2026-07-09 — stabilization pass)
+
+The app did not actually run as shipped; this pass made it runnable and added a
+regression guard. See `completed-tasks.md` for detail.
+
+- [x] Fix backend boot crash (`models/DailyUpdate.js` / `WeeklyUpdate.js` → `Update.js`)
+- [x] Complete the Chakra UI v3→v2 migration (16 pages were rendering blank)
+- [x] Add an app-wide React error boundary (blank-screen crashes now surface)
+- [x] Repair the frontend test harness (vitest `setupFiles` path + Chakra v2 test-utils)
+- [x] Add render smoke tests for all 22 pages
+- [x] Update the AI model (retired `claude-3-5-sonnet-20241022` → `claude-sonnet-5`,
+      overridable via `ANTHROPIC_MODEL`)
+- [x] Remove Google Chat placeholder images (webhook is a per-user UI setting)
+- [x] Refresh docs (README status/known-issues, new DEVELOPMENT.md, todo trackers)
+
+Note: **Rate limiting** and **Sentry error logging** listed below are already
+implemented in the codebase — marked done.
 
 ## In Progress
 
@@ -32,16 +50,16 @@
 
 ### Medium Priority
 
-- [ ] **Add Error Logging Service**
-  - [ ] Integrate Sentry or similar service
+- [x] **Add Error Logging Service** — Sentry is integrated (`config/sentry.js`, `@sentry/node`)
+  - [x] Integrate Sentry or similar service
   - [ ] Configure error tracking for backend
   - [ ] Configure error tracking for frontend
   - [ ] Set up error alerts
   - **Assignee:** DevOps
   - **Due:** 2025-11-10
 
-- [ ] **Implement Rate Limiting**
-  - [ ] Install express-rate-limit
+- [x] **Implement Rate Limiting** — `express-rate-limit` in `middleware/rateLimiter.js`
+  - [x] Install express-rate-limit
   - [ ] Configure rate limits per endpoint
   - [ ] Add rate limit tests
   - [ ] Document rate limit policies
