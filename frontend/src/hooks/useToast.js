@@ -1,16 +1,17 @@
 /**
- * Chakra UI v3 useToast Compatibility Hook
- * Provides backward compatibility with Chakra UI v2 useToast API
+ * useToast compatibility hook.
+ *
+ * Thin adapter over the standalone `toaster` (services/toaster.js, Chakra v2)
+ * exposing the familiar `toast({ status })` signature plus helper methods.
+ * Most components can just use Chakra's built-in `useToast` from
+ * `@chakra-ui/react`; this exists for code that already imports it.
  */
 
 import { useCallback } from 'react';
 import { toaster } from '../services/toaster';
 
 /**
- * Custom hook that mimics Chakra UI v2 useToast API
- * Maps old API to new Chakra UI v3 toaster
- * 
- * @returns {Function} Toast function compatible with v2 API
+ * @returns {Function} Toast function with .success/.error/.warning/.info/.loading/.close/.closeAll
  */
 export const useToast = () => {
   const toast = useCallback((options) => {

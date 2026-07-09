@@ -1,32 +1,27 @@
 /**
  * Unit tests for the centralized toaster service (services/toaster.js).
  *
- * NOTE: services/toaster.js is written against Chakra UI v3's `createToaster`
- * API, but this project runs Chakra v2 where `createToaster` does not exist —
- * so importing the module unmocked throws at load time. We therefore mock
- * `createToaster` to return a spyable toaster instance and assert that the
- * exported helpers delegate to the correct toaster methods with the expected
- * payloads. This is the wiring the module is responsible for.
+ * The service uses Chakra v2's `createStandaloneToast`, which returns a
+ * `toast()` function (with .close/.closeAll/.promise). We mock it to a spyable
+ * function and assert the exported helpers fire toasts with the right status
+ * and payload.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const { mockToaster } = vi.hoisted(() => ({
-  mockToaster: {
-    create: vi.fn(() => 'toast-id'),
-    success: vi.fn(() => 'toast-id'),
-    error: vi.fn(() => 'toast-id'),
-    warning: vi.fn(() => 'toast-id'),
-    info: vi.fn(() => 'toast-id'),
-    loading: vi.fn(() => 'toast-id'),
-    promise: vi.fn(() => 'toast-id'),
-    remove: vi.fn(),
-    dismiss: vi.fn(),
-  },
-}));
+const { mockToast } = vi.hoisted(() => {
+  const t = vi.fn(() => 'toast-id');
+  t.close = vi.fn();
+  t.closeAll = vi.fn();
+  t.promise = vi.fn(() => 'toast-id');
+  return { mockToast: t };
+});
 
 vi.mock('@chakra-ui/react', async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, createToaster: () => mockToaster };
+  return {
+    ...actual,
+    createStandaloneToast: () => ({ toast: mockToast, ToastContainer: () => null }),
+  };
 });
 
 import toaster, {
@@ -38,47 +33,59 @@ import toaster, {
   showLoadingToast,
 } from '../services/toaster';
 
-describe('toaster service', () => {
+describe('toaster service (Chakra v2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('exports the same toaster as default and named export', () => {
+  it('default and named exports are the same toaster', () => {
     expect(toaster).toBe(namedToaster);
-    expect(toaster).toBe(mockToaster);
   });
 
-  it('showSuccessToast delegates to toaster.success with title/description', () => {
+  it('toaster.success fires a success-status toast', () => {
+    toaster.success({ title: 'Saved' });
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'success', title: 'Saved' })
+    );
+  });
+
+  it('showSuccessToast delegates with success status + title/description', () => {
     showSuccessToast('Saved', 'All good');
-    expect(mockToaster.success).toHaveBeenCalledTimes(1);
-    expect(mockToaster.success).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Saved', description: 'All good' })
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'success', title: 'Saved', description: 'All good' })
     );
   });
 
-  it('showErrorToast delegates to toaster.error', () => {
+  it('showErrorToast fires an error toast', () => {
     showErrorToast('Oops', 'Broke');
-    expect(mockToaster.error).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Oops', description: 'Broke' })
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'error', title: 'Oops', description: 'Broke' })
     );
   });
 
-  it('showWarningToast and showInfoToast delegate to their methods', () => {
+  it('warning and info helpers map to their statuses', () => {
     showWarningToast('Careful');
     showInfoToast('FYI');
-    expect(mockToaster.warning).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Careful' })
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'warning', title: 'Careful' })
     );
-    expect(mockToaster.info).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'FYI' })
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'info', title: 'FYI' })
     );
   });
 
-  it('showLoadingToast delegates to toaster.loading and returns its id', () => {
+  it('showLoadingToast fires a loading toast with duration null and returns the id', () => {
     const id = showLoadingToast('Working...');
-    expect(mockToaster.loading).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Working...', duration: null })
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'loading', title: 'Working...', duration: null })
     );
     expect(id).toBe('toast-id');
+  });
+
+  it('remove/dismiss delegate to toast.close/closeAll', () => {
+    toaster.remove('abc');
+    toaster.dismiss();
+    expect(mockToast.close).toHaveBeenCalledWith('abc');
+    expect(mockToast.closeAll).toHaveBeenCalled();
   });
 });
