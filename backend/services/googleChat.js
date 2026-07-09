@@ -62,7 +62,7 @@ export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
     header: {
       title: '📝 Daily Update',
       subtitle: `${companyName} - ${date}`,
-      imageUrl: 'https://via.placeholder.com/32',
+      imageUrl: process.env.APP_LOGO_URL || undefined,
     },
     sections: [
       {
@@ -117,7 +117,7 @@ export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user) =>
     header: {
       title: '📊 Weekly Summary',
       subtitle: `${companyName} - ${startDate} to ${endDate}`,
-      imageUrl: 'https://via.placeholder.com/32',
+      imageUrl: process.env.APP_LOGO_URL || undefined,
     },
     sections: [
       {

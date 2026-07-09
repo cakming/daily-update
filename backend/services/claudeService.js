@@ -4,6 +4,11 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Model is configurable via env; defaults to the current Sonnet tier.
+// `thinking: disabled` keeps output direct (Sonnet 5 runs adaptive thinking by
+// default, which would otherwise consume the max_tokens budget).
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-5';
+
 /**
  * Process technical update text and convert to client-friendly format
  */
@@ -49,8 +54,9 @@ ${technicalText}
 Return ONLY the formatted update text, nothing else.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
+      model: CLAUDE_MODEL,
+      max_tokens: 3000,
+      thinking: { type: 'disabled' },
       messages: [{
         role: 'user',
         content: prompt
@@ -129,8 +135,9 @@ ${combinedUpdates}
 Return ONLY the formatted weekly update text, nothing else.`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2500,
+      model: CLAUDE_MODEL,
+      max_tokens: 3500,
+      thinking: { type: 'disabled' },
       messages: [{
         role: 'user',
         content: prompt
