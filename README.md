@@ -26,10 +26,25 @@ active development**.
   reintroduce v3 dotted-component syntax (`Card.Root`, `Tabs.Trigger`, `Modal.Root`,
   etc.); it resolves to `undefined` on v2 and blanks the page. The page render smoke
   tests (`src/__tests__/pages/`) guard against this.
-- **Test coverage is thin** — the harness works and every page has a render smoke test,
-  but there is little behavioral/unit coverage yet.
+- **Stale toast wrappers** — `src/services/toaster.js` and `src/hooks/useToast.js` use the
+  Chakra **v3** `createToaster` API, which doesn't exist on v2 (they throw on import). They
+  are only referenced by `src/utils/errorHandler.js`, which nothing currently imports, so
+  there's no live crash — but they should be migrated to Chakra v2's `useToast` /
+  `createStandaloneToast` or removed. Components already use Chakra's built-in `useToast`.
+- **Test coverage** — substantially expanded (backend ~62%, 527 passing; frontend has
+  behavioral + smoke tests across all pages), but still below the 80% `coverageThreshold`
+  in `backend/jest.config.js`, so `npm run test:coverage` exits non-zero until that's met.
+- **Legacy backend test rot (pre-existing, ~16 tests)** — three older suites still fail and
+  are unrelated to app behavior: `analytics.integration` (seed/response-shape mismatch),
+  `export.integration` (makes real external network calls — flaky), and one
+  `weeklyUpdateController` assertion. (The rate-limit-in-test and missing-model-registration
+  issues that had caused ~60 spurious failures are now fixed.)
 
 ### Resolved
+- ~~Profile update / avatar upload threw~~ — `AuthContext` now exposes `setUser` (Profile
+  called it but it wasn't in the context value).
+- ~~Tag filter/selector popovers wouldn't open~~ — the controlled `<Popover>` triggers now
+  toggle `isOpen` on click.
 - ~~Backend crashed on startup~~ — the `models/DailyUpdate.js` / `WeeklyUpdate.js`
   imports were fixed to `Update.js`.
 - ~~16 pages rendered blank~~ — completed the Chakra v3→v2 migration and added an

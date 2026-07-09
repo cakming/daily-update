@@ -106,7 +106,7 @@ const TagFilter = ({ selectedTags = [], onChange, allowMultiple = true }) => {
         {/* Filter Button */}
         <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} isLazy>
           <PopoverTrigger>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setIsOpen((o) => !o)}>
               Filter by Tags
               {selectedTags.length > 0 && (
                 <Badge ml={2} colorScheme="pink">

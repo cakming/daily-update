@@ -487,7 +487,8 @@ describe('Auth Controller', () => {
         data: {
           _id: testUser._id,
           name: testUser.name,
-          email: testUser.email
+          email: testUser.email,
+          emailVerified: testUser.emailVerified
         }
       });
     });
