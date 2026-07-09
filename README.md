@@ -31,16 +31,16 @@ active development**.
   are only referenced by `src/utils/errorHandler.js`, which nothing currently imports, so
   there's no live crash — but they should be migrated to Chakra v2's `useToast` /
   `createStandaloneToast` or removed. Components already use Chakra's built-in `useToast`.
-- **Test coverage** — substantially expanded (backend ~62%, 527 passing; frontend has
-  behavioral + smoke tests across all pages), but still below the 80% `coverageThreshold`
-  in `backend/jest.config.js`, so `npm run test:coverage` exits non-zero until that's met.
-- **Legacy backend test rot (pre-existing, ~16 tests)** — three older suites still fail and
-  are unrelated to app behavior: `analytics.integration` (seed/response-shape mismatch),
-  `export.integration` (makes real external network calls — flaky), and one
-  `weeklyUpdateController` assertion. (The rate-limit-in-test and missing-model-registration
-  issues that had caused ~60 spurious failures are now fixed.)
+- **Test coverage** — substantially expanded (backend ~62%; frontend has behavioral +
+  smoke tests across all pages), but still below the 80% `coverageThreshold` in
+  `backend/jest.config.js`, so `npm run test:coverage` exits non-zero until that's met
+  (`npm test` is green).
 
 ### Resolved
+- ~~Backend test suite had 77 failures~~ — now **543 passing / 0 failing**. Fixed:
+  rate limiters skip under `NODE_ENV=test` (were 429-ing integration suites), all models
+  registered in `jest.setup.js`, and the `export`/`analytics` suites now mock the Anthropic
+  SDK (they had been making real calls to api.anthropic.com and seeding nothing).
 - ~~Profile update / avatar upload threw~~ — `AuthContext` now exposes `setUser` (Profile
   called it but it wasn't in the context value).
 - ~~Tag filter/selector popovers wouldn't open~~ — the controlled `<Popover>` triggers now

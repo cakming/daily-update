@@ -264,7 +264,7 @@ describe('Weekly Update Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        message: 'A weekly update already exists for this date range. Please use the update endpoint to modify it.'
+        message: 'A weekly update already exists for this date range and company. Please use the update endpoint to modify it.'
       });
     });
 

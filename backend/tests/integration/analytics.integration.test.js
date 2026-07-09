@@ -1,11 +1,23 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals';
 import request from 'supertest';
-import app from '../../app.js';
 import { connectTestDB, closeTestDB, clearTestDB } from '../setup/testDb.js';
-import mongoose from 'mongoose';
-import User from '../../models/User.js';
-import Update from '../../models/Update.js';
-import Company from '../../models/Company.js';
+
+// Mock Anthropic SDK before importing app so seeding via POST /api/daily-updates
+// does not make real network calls.
+const mockCreate = jest.fn();
+jest.unstable_mockModule('@anthropic-ai/sdk', () => ({
+  default: jest.fn().mockImplementation(() => ({
+    messages: {
+      create: mockCreate
+    }
+  }))
+}));
+
+// Dynamic imports after mocking
+const { default: app } = await import('../../app.js');
+const { default: User } = await import('../../models/User.js');
+const { default: Update } = await import('../../models/Update.js');
+const { default: Company } = await import('../../models/Company.js');
 
 describe('Analytics Integration Tests', () => {
   let authToken;
@@ -23,6 +35,13 @@ describe('Analytics Integration Tests', () => {
   beforeEach(async () => {
     // Clear database before each test
     await clearTestDB();
+
+    // Canned Anthropic response so daily-update creation succeeds during seeding
+    mockCreate.mockResolvedValue({
+      content: [{
+        text: '🗓️ Daily Update — test\n\n✅ Today\'s Progress\n- did work'
+      }]
+    });
 
     // Create test user
     const userRes = await request(app)
@@ -80,10 +99,12 @@ describe('Analytics Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('totalUpdates');
-      expect(res.body.data).toHaveProperty('dailyUpdates');
-      expect(res.body.data).toHaveProperty('weeklyUpdates');
-      expect(res.body.data.totalUpdates).toBeGreaterThanOrEqual(2);
+      expect(res.body.data).toHaveProperty('summary.totalUpdates');
+      expect(res.body.data).toHaveProperty('byType.daily');
+      expect(res.body.data).toHaveProperty('byType.weekly');
+      expect(res.body.data).toHaveProperty('activityByDay');
+      expect(res.body.data.summary.totalUpdates).toBeGreaterThanOrEqual(2);
+      expect(res.body.data.byType.daily).toBeGreaterThanOrEqual(2);
     });
 
     test('should filter dashboard by company', async () => {
@@ -94,7 +115,8 @@ describe('Analytics Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.totalUpdates).toBeGreaterThanOrEqual(1);
+      // Only one seeded update carries this companyId
+      expect(res.body.data.summary.totalUpdates).toBe(1);
     });
 
     test('should filter dashboard by date range', async () => {
@@ -125,10 +147,14 @@ describe('Analytics Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('daily');
-      expect(res.body.data).toHaveProperty('weekly');
-      expect(Array.isArray(res.body.data.daily)).toBe(true);
-      expect(Array.isArray(res.body.data.weekly)).toBe(true);
+      expect(res.body.data).toHaveProperty('trend');
+      expect(res.body.data).toHaveProperty('period');
+      expect(res.body.data).toHaveProperty('total');
+      expect(res.body.data).toHaveProperty('average');
+      expect(Array.isArray(res.body.data.trend)).toBe(true);
+      // Each point carries a date and a count
+      expect(res.body.data.trend[0]).toHaveProperty('date');
+      expect(res.body.data.trend[0]).toHaveProperty('count');
     });
 
     test('should filter trends by company', async () => {
@@ -154,15 +180,17 @@ describe('Analytics Integration Tests', () => {
       expect(res.body.success).toBe(true);
     });
 
-    test('should limit results when limit provided', async () => {
+    test('should size the trend window to the period provided', async () => {
       const res = await request(app)
         .get('/api/analytics/trends')
-        .query({ limit: 5 })
+        .query({ period: 5 })
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.daily.length).toBeLessThanOrEqual(5);
+      // Controller fills one trend point per day in the requested period
+      expect(res.body.data.period).toBe('5 days');
+      expect(res.body.data.trend.length).toBe(5);
     });
 
     test('should require authentication', async () => {
