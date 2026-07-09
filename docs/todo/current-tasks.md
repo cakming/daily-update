@@ -17,6 +17,12 @@ regression guard. See `completed-tasks.md` for detail.
       overridable via `ANTHROPIC_MODEL`)
 - [x] Remove Google Chat placeholder images (webhook is a per-user UI setting)
 - [x] Refresh docs (README status/known-issues, new DEVELOPMENT.md, todo trackers)
+- [x] Add Swagger/OpenAPI API docs at `/api-docs` (19 paths annotated)
+- [x] Add behavioral frontend tests (Login/CreateDaily/History/ExportButton) + tags
+      backend integration tests + Playwright E2E smoke specs
+- [x] Skeleton loaders on History/Companies/Templates
+- [x] DOMPurify `sanitize()` helper (audit: no `dangerouslySetInnerHTML` sinks)
+- [x] Monitoring & backups runbook (`docs/deployment/monitoring-and-backups.md`)
 
 Note: **Rate limiting** and **Sentry error logging** listed below are already
 implemented in the codebase — marked done.
@@ -76,16 +82,16 @@ implemented in the codebase — marked done.
 
 ### Low Priority
 
-- [ ] **Create API Documentation with Swagger**
-  - [ ] Install swagger-jsdoc and swagger-ui-express
+- [x] **Create API Documentation with Swagger** — served at `/api-docs` (+ `/api-docs.json`)
+  - [x] Install swagger-jsdoc and swagger-ui-express
   - [ ] Add JSDoc comments to routes
   - [ ] Generate interactive API docs
   - [ ] Host at /api-docs endpoint
   - **Assignee:** Backend Team
   - **Due:** 2025-11-15
 
-- [ ] **Add Loading States Improvements**
-  - [ ] Add skeleton loaders for History page
+- [~] **Add Loading States Improvements** — skeletons on History/Companies/Templates
+  - [x] Add skeleton loaders for History page
   - [ ] Add progress indicators for AI processing
   - [ ] Improve feedback during save operations
   - **Assignee:** Frontend Team
