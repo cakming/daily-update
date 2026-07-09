@@ -207,7 +207,7 @@ const Login = () => {
                         type="submit"
                         colorScheme="blue"
                         w="full"
-                        loading={loading}
+                        isLoading={loading}
                         mt={4}
                         isDisabled={require2FA && !twoFactorToken}
                       >
@@ -264,7 +264,7 @@ const Login = () => {
                         type="submit"
                         colorScheme="blue"
                         w="full"
-                        loading={loading}
+                        isLoading={loading}
                         mt={4}
                       >
                         Register

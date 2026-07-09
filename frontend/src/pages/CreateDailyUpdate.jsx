@@ -284,7 +284,7 @@ const CreateDailyUpdate = () => {
               onClick={handleGenerate}
               colorScheme="blue"
               size="lg"
-              loading={loading}
+              isLoading={loading}
               flex={1}
             >
               Generate Client-Friendly Update

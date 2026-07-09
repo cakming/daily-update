@@ -2,22 +2,35 @@
 
 A professional client communication tool that transforms technical team updates into client-friendly daily and weekly reports using AI.
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-success)](./PRODUCTION_SETUP.md)
-[![Test Coverage](https://img.shields.io/badge/coverage-71%25-green)]()
-[![License](https://img.shields.io/badge/license-MIT-blue)]()
+[![Status](https://img.shields.io/badge/status-beta%20%2F%20in%20development-yellow)](./DEVELOPMENT.md)
+[![License](https://img.shields.io/badge/license-ISC-blue)]()
 
-## 🚀 Production Ready
+## 🚧 Status
 
-This app is **production-ready** and can be deployed in ~15 minutes!
+The app has a broad feature set (see [Features](#-features)) and deployment
+configs, but it is **not yet production-ready**. Treat it as **beta / in
+active development**.
 
-- ✅ Complete feature set with AI-powered updates
-- ✅ Comprehensive test coverage (71% backend, E2E tests)
-- ✅ Security hardened (JWT, rate limiting, CORS)
-- ✅ Full deployment documentation
-- ✅ Error tracking configured (Sentry)
-- ✅ Estimated cost: $5-15/month
+- ✅ Full feature surface implemented (auth, updates, teams, integrations, analytics)
+- ✅ Deployment configs for Railway/Render/Fly.io + Vercel/Netlify
+- ⚠️ Test coverage is partial and unverified — do not rely on the old "71%" figure
+- ⚠️ Some rough edges remain — see **[Known Issues](#-known-issues)** below
 
-**Quick Deploy:** See [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) or [QUICK_REFERENCE.md](./QUICK_REFERENCE.md)
+**Run it locally:** see **[DEVELOPMENT.md](./DEVELOPMENT.md)** for a full local setup
+(including a zero-dependency in-memory MongoDB option).
+
+## ⚠️ Known Issues
+
+- **Auth rate limiter is strict** — `/api/auth` (including `/me`, called on every
+  page load) is capped at 5 requests / 15 min, which can log active users out.
+  Consider raising it or exempting `/me`.
+- **Google Chat cards** use `via.placeholder.com` placeholder images
+  (`backend/services/googleChat.js`).
+- **AI model** is pinned to `claude-3-5-sonnet-20241022`; consider updating to a
+  current Claude model in `backend/services/claudeService.js`.
+- **Chakra UI** — the codebase targets Chakra **v2** (see `package.json`). Do not
+  reintroduce v3 dotted-component syntax (`Card.Root`, `Tabs.Trigger`, etc.); it
+  resolves to `undefined` on v2 and blanks the page.
 
 ## Overview
 

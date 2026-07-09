@@ -580,7 +580,7 @@ const Profile = () => {
                                   </Text>
                                 </VStack>
                                 <IconButton
-                                  icon="👁️"
+                                  icon={<span>👁️</span>}
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => navigate('/history')}

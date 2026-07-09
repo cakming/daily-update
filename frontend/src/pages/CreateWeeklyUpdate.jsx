@@ -278,7 +278,7 @@ const CreateWeeklyUpdate = () => {
               onClick={handleGenerate}
               colorScheme="green"
               size="lg"
-              loading={loading}
+              isLoading={loading}
               flex={1}
             >
               Generate Weekly Summary
