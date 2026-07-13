@@ -219,8 +219,8 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findResult = [
-        { company: { name: 'Acme' }, aiSummary: 'Did things' },
-        { company: null },
+        { companyId: { name: 'Acme' }, aiSummary: 'Did things' },
+        { companyId: null },
       ];
       const ctx = makeCtx();
       await commandHandlers.today(ctx);
@@ -263,7 +263,7 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findResult = [
-        { company: { name: 'Acme' }, aiSummary: 'Weekly recap', dailyUpdates: [1, 2, 3] },
+        { companyId: { name: 'Acme' }, aiSummary: 'Weekly recap', dailyUpdates: [1, 2, 3] },
       ];
       const ctx = makeCtx();
       await commandHandlers.week(ctx);
@@ -276,7 +276,7 @@ describe('Telegram Bot Service', () => {
     it('renders the weekly summary with no company and no AI summary', async () => {
       start();
       foundUser = { _id: 'u1' };
-      findResult = [{ company: null, dailyUpdates: undefined }];
+      findResult = [{ companyId: null, dailyUpdates: undefined }];
       const ctx = makeCtx();
       await commandHandlers.week(ctx);
       const text = replyText(ctx);
@@ -346,7 +346,7 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findOneResult = {
-        company: { name: 'Acme' },
+        companyId: { name: 'Acme' },
         createdAt: new Date('2026-01-01'),
         aiSummary: 'Summary here',
         content: 'x'.repeat(600),
@@ -364,7 +364,7 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findOneResult = {
-        company: null,
+        companyId: null,
         createdAt: new Date('2026-01-01'),
         content: 'short content',
       };

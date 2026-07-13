@@ -255,10 +255,10 @@ describe('Scheduler Service', () => {
       expect(sched.calculateNextRun).not.toHaveBeenCalled();
     });
 
-    it('swallows email send failures (sendScheduledEmail never throws)', async () => {
-      // sendScheduledEmail has its own try/catch that logs and returns, so an
-      // SMTP failure does NOT propagate. emailSent is still flagged true and the
-      // run stays "success". See note re: the unreachable "partial" branch.
+    it('records a partial run when the email send fails', async () => {
+      // sendScheduledEmail reports 'failed' on an SMTP error, so the update was
+      // created but the email did not go out: status is "partial" and emailSent
+      // reflects reality (false).
       sendMailShouldReject = true;
       const sched = makeScheduled({ type: 'daily', sendEmail: true });
 
@@ -266,8 +266,8 @@ describe('Scheduler Service', () => {
 
       expect(sendMail).toHaveBeenCalled();
       const h = historyEntries[0];
-      expect(h.status).toBe('success');
-      expect(h.emailSent).toBe(true);
+      expect(h.status).toBe('partial');
+      expect(h.emailSent).toBe(false);
     });
 
     it('skips email gracefully when no transporter is configured', async () => {

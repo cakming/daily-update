@@ -89,18 +89,18 @@ describe('Email API Integration Tests', () => {
   });
 
   describe('POST /api/email/daily/:id', () => {
-    // NOTE: The controller calls `.populate('company')` but the Update model only
-    // defines `companyId`. Mongoose strictPopulate throws for an existing document,
-    // so sending a real update currently fails with 500 (a pre-existing app bug).
-    // We assert the actual behavior here to exercise the populate/catch path.
-    it('currently returns 500 when populating an existing update (known bug)', async () => {
+    // Regression: the controller must populate `companyId` (the real schema
+    // path), not `company`. Populating a non-existent path throws under
+    // Mongoose strictPopulate and used to 500 the request.
+    it('sends a daily update email for an existing update', async () => {
       const update = await Update.create(createDailyUpdateFixture(testUser._id));
       const res = await request(app)
         .post(`/api/email/daily/${update._id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ recipients: ['a@example.com', 'b@example.com'] })
-        .expect(500);
-      expect(res.body.success).toBe(false);
+        .expect(200);
+      expect(res.body.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(2); // one send per recipient
     });
 
     it('should reject without recipients', async () => {
@@ -138,16 +138,17 @@ describe('Email API Integration Tests', () => {
   });
 
   describe('POST /api/email/weekly/:id', () => {
-    // Same pre-existing populate bug as the daily route (populates 'company'/'dailyUpdates'
-    // which are not schema paths), so an existing summary currently 500s.
-    it('currently returns 500 when populating an existing summary (known bug)', async () => {
+    // Regression: same fix as the daily route — populate `companyId`, and drop
+    // the invalid `.populate('dailyUpdates')` (not a schema path).
+    it('sends a weekly summary email for an existing summary', async () => {
       const update = await Update.create(createWeeklyUpdateFixture(testUser._id));
       const res = await request(app)
         .post(`/api/email/weekly/${update._id}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ recipients: ['a@example.com'] })
-        .expect(500);
-      expect(res.body.success).toBe(false);
+        .expect(200);
+      expect(res.body.success).toBe(true);
+      expect(mockSendMail).toHaveBeenCalledTimes(1);
     });
 
     it('should return 404 for a non-existent summary', async () => {

@@ -77,16 +77,38 @@ describe('Teams API Integration Tests', () => {
   });
 
   describe('GET /api/teams/:id', () => {
-    // NOTE: getTeam populates `members.userId` and then calls team.isMember(), which
-    // compares `member.userId.toString()` against the user id. After population that
-    // field is a full document, so the comparison never matches and even a legitimate
-    // member currently receives 403 (a pre-existing app bug). We assert real behavior.
-    it('currently returns 403 for a member due to populate/isMember bug', async () => {
+    // Regression: getTeam must check membership BEFORE populating members.userId.
+    // Populating first turns member.userId into a document, which breaks
+    // isMember()'s ObjectId comparison and used to lock out legitimate members.
+    it('returns the team for the owner, with populated owner and members', async () => {
       const team = await ownedTeam();
-      await request(app)
+      const res = await request(app)
         .get(`/api/teams/${team._id}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(403);
+        .expect(200);
+      expect(res.body.data._id.toString()).toBe(team._id.toString());
+      // members.userId and owner are populated to user documents with name/email
+      expect(res.body.data.owner.email).toBe('teams-test@example.com');
+      expect(res.body.data.members[0].userId.email).toBe('teams-test@example.com');
+    });
+
+    it('returns the team for a non-owner member (the previously broken case)', async () => {
+      const member = await User.create(
+        createUserFixture({ email: 'plain-member@example.com', password: 'password123' })
+      );
+      const memberToken = generateToken(member._id);
+      const team = await Team.create({
+        name: 'Shared',
+        owner: testUser._id,
+        members: [
+          { userId: testUser._id, role: 'owner', joinedAt: new Date() },
+          { userId: member._id, role: 'member', joinedAt: new Date() },
+        ],
+      });
+      await request(app)
+        .get(`/api/teams/${team._id}`)
+        .set('Authorization', `Bearer ${memberToken}`)
+        .expect(200);
     });
 
     it('should return 404 for a non-existent team', async () => {

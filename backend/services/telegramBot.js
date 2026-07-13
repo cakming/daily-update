@@ -110,7 +110,7 @@ Once linked, you'll be able to receive updates directly here!
           userId: user._id,
           createdAt: { $gte: today },
         })
-          .populate('company')
+          .populate('companyId')
           .sort({ createdAt: -1 });
 
         if (updates.length === 0) {
@@ -121,7 +121,7 @@ Once linked, you'll be able to receive updates directly here!
         let message = `📅 Today's Updates (${updates.length}):\n\n`;
 
         updates.forEach((update, index) => {
-          const companyName = update.company?.name || 'No Company';
+          const companyName = update.companyId?.name || 'No Company';
           message += `${index + 1}. ${companyName}\n`;
           if (update.aiSummary) {
             message += `📌 ${update.aiSummary}\n`;
@@ -157,7 +157,7 @@ Once linked, you'll be able to receive updates directly here!
           userId: user._id,
           'period.startDate': { $gte: startDate },
         })
-          .populate('company')
+          .populate('companyId')
           .sort({ createdAt: -1 })
           .limit(1);
 
@@ -167,7 +167,7 @@ Once linked, you'll be able to receive updates directly here!
         }
 
         const summary = summaries[0];
-        const companyName = summary.company?.name || 'All Companies';
+        const companyName = summary.companyId?.name || 'All Companies';
 
         let message = `📊 Weekly Summary - ${companyName}\n\n`;
         if (summary.aiSummary) {
@@ -234,7 +234,7 @@ Keep up the great work! 🎉
         }
 
         const latestUpdate = await DailyUpdate.findOne({ userId: user._id })
-          .populate('company')
+          .populate('companyId')
           .sort({ createdAt: -1 });
 
         if (!latestUpdate) {
@@ -242,7 +242,7 @@ Keep up the great work! 🎉
           return;
         }
 
-        const companyName = latestUpdate.company?.name || 'No Company';
+        const companyName = latestUpdate.companyId?.name || 'No Company';
         const date = new Date(latestUpdate.createdAt).toLocaleDateString();
 
         let message = `📝 Latest Update\n\n`;

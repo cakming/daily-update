@@ -64,7 +64,7 @@ export const emailTemplates = {
    * Daily update email template
    */
   dailyUpdate: (update, user) => {
-    const companyName = update.company?.name || 'No Company';
+    const companyName = update.companyId?.name || 'No Company';
     const date = new Date(update.createdAt).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -216,7 +216,7 @@ This email was sent from Daily Update App
    * Weekly summary email template
    */
   weeklySummary: (update, user) => {
-    const companyName = update.company?.name || 'No Company';
+    const companyName = update.companyId?.name || 'No Company';
     const startDate = new Date(update.period.startDate).toLocaleDateString();
     const endDate = new Date(update.period.endDate).toLocaleDateString();
 
