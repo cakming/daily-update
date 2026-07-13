@@ -6,6 +6,7 @@ import {
   sendDailyUpdateToGoogleChat,
   sendWeeklySummaryToGoogleChat,
 } from '../services/googleChat.js';
+import { getSummaryMode } from '../services/updateFormatter.js';
 
 /**
  * Integration Controller
@@ -366,7 +367,10 @@ export const sendGoogleChatDaily = async (req, res) => {
     const update = await loadOwnedUpdate(req, res, 'daily');
     if (!update) return;
 
-    const sent = await sendDailyUpdateToGoogleChat(user.googleChatWebhook, update, user);
+    const summaryMode = await getSummaryMode(req.user._id);
+    const sent = await sendDailyUpdateToGoogleChat(user.googleChatWebhook, update, user, {
+      summaryMode,
+    });
     if (!sent) {
       return res.status(502).json({
         success: false,
@@ -406,7 +410,10 @@ export const sendGoogleChatWeekly = async (req, res) => {
     const update = await loadOwnedUpdate(req, res, 'weekly');
     if (!update) return;
 
-    const sent = await sendWeeklySummaryToGoogleChat(user.googleChatWebhook, update, user);
+    const summaryMode = await getSummaryMode(req.user._id);
+    const sent = await sendWeeklySummaryToGoogleChat(user.googleChatWebhook, update, user, {
+      summaryMode,
+    });
     if (!sent) {
       return res.status(502).json({
         success: false,

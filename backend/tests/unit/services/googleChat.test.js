@@ -187,6 +187,7 @@ describe('Google Chat Service', () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
+        type: 'weekly',
         dateRange: { start: '2026-01-05', end: '2026-01-11' },
         companyId: { name: 'Globex' },
         formattedOutput: 'Delivered several features.',
@@ -212,6 +213,7 @@ describe('Google Chat Service', () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
+        type: 'weekly',
         dateRange: { start: '2026-01-05', end: '2026-01-11' },
         formattedOutput: 'Quiet week.',
         // no companyId, dailyUpdates, tags
@@ -234,6 +236,7 @@ describe('Google Chat Service', () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
+        type: 'weekly',
         dateRange: { start: '2026-01-05', end: '2026-01-11' },
         formattedOutput: 'y'.repeat(700),
       };
@@ -251,6 +254,7 @@ describe('Google Chat Service', () => {
       global.fetch.mockRejectedValue(new Error('boom'));
 
       const update = {
+        type: 'weekly',
         dateRange: { start: '2026-01-05', end: '2026-01-11' },
         formattedOutput: 'hi',
       };

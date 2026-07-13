@@ -60,6 +60,12 @@ const updateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Short, one-glance summary derived from the AI output. Shown in notifications
+  // when the user's summaryMode is 'summary' (vs the full formattedOutput).
+  aiSummary: {
+    type: String,
+    default: ''
+  },
   sections: {
     todaysProgress: [String],
     ongoingWork: [String],

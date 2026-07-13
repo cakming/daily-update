@@ -1,5 +1,5 @@
 import Update from '../models/Update.js';
-import { processWeeklyUpdate } from '../services/claudeService.js';
+import { processWeeklyUpdate, deriveSummary } from '../services/claudeService.js';
 
 /**
  * @desc    Generate a weekly update from daily updates
@@ -47,18 +47,20 @@ export const generateWeeklyUpdate = async (req, res) => {
       });
     }
 
-    let formattedOutput, sections;
+    let formattedOutput, sections, aiSummary;
 
     if (rawInput) {
       // If raw input is provided, use it directly (useful for manual weekly summaries)
       const result = await processWeeklyUpdate([{ rawInput, date: startDate }], startDate, endDate);
       formattedOutput = result.formattedOutput;
       sections = result.sections;
+      aiSummary = result.aiSummary;
     } else {
       // Generate from daily updates
       const result = await processWeeklyUpdate(dailyUpdates, startDate, endDate);
       formattedOutput = result.formattedOutput;
       sections = result.sections;
+      aiSummary = result.aiSummary;
     }
 
     res.json({
@@ -66,6 +68,7 @@ export const generateWeeklyUpdate = async (req, res) => {
       data: {
         formattedOutput,
         sections,
+        aiSummary,
         dailyUpdatesUsed: dailyUpdates.length
       }
     });
@@ -136,6 +139,7 @@ export const createWeeklyUpdate = async (req, res) => {
       },
       rawInput: rawInput || 'Generated from daily updates',
       formattedOutput,
+      aiSummary: req.body.aiSummary || deriveSummary(formattedOutput, sections),
       sections
     };
 

@@ -41,7 +41,7 @@ export const createDailyUpdate = async (req, res) => {
     }
 
     // Process the update with Claude API
-    const { formattedOutput, sections } = await processDailyUpdate(rawInput, date);
+    const { formattedOutput, sections, aiSummary } = await processDailyUpdate(rawInput, date);
 
     // Create the update
     const updateData = {
@@ -50,6 +50,7 @@ export const createDailyUpdate = async (req, res) => {
       date: new Date(date),
       rawInput,
       formattedOutput,
+      aiSummary,
       sections
     };
 

@@ -106,6 +106,12 @@ jest.unstable_mockModule('../../../models/ScheduleHistory.js', () => ({
   default: MockHistory,
 }));
 
+// NotificationPreference is read by updateFormatter.getSummaryMode (invoked from
+// sendScheduledEmail); return null so the mode defaults to 'full'.
+jest.unstable_mockModule('../../../models/NotificationPreference.js', () => ({
+  default: { findOne: () => ({ select: () => Promise.resolve(null) }) },
+}));
+
 // ---------------------------------------------------------------------------
 // User model mock — findById used inside sendScheduledEmail.
 // ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import WeeklyUpdate from '../models/Update.js';
 import User from '../models/User.js';
 import { getTransporter, emailTemplates } from '../config/email.js';
 import { processDailyUpdate, processWeeklyUpdate } from './claudeService.js';
+import { getSummaryMode } from './updateFormatter.js';
 import { subDays } from 'date-fns';
 
 /**
@@ -62,7 +63,7 @@ const executeScheduledUpdate = async (scheduled) => {
       // Generate and create a daily update via the same AI pipeline the
       // daily-update controller uses, matching the Update schema.
       const date = new Date();
-      const { formattedOutput, sections } = await processDailyUpdate(
+      const { formattedOutput, sections, aiSummary } = await processDailyUpdate(
         scheduled.content,
         date
       );
@@ -75,6 +76,7 @@ const executeScheduledUpdate = async (scheduled) => {
         tags: scheduled.tags?.map((tag) => tag._id) || [],
         rawInput: scheduled.content,
         formattedOutput,
+        aiSummary,
         sections,
       });
 
@@ -104,7 +106,7 @@ const executeScheduledUpdate = async (scheduled) => {
         weekDailies.length > 0
           ? weekDailies
           : [{ rawInput: scheduled.content, date: startDate }];
-      const { formattedOutput, sections } = await processWeeklyUpdate(
+      const { formattedOutput, sections, aiSummary } = await processWeeklyUpdate(
         source,
         startDate,
         endDate
@@ -118,6 +120,7 @@ const executeScheduledUpdate = async (scheduled) => {
         tags: scheduled.tags?.map((tag) => tag._id) || [],
         rawInput: scheduled.content,
         formattedOutput,
+        aiSummary,
         sections,
         dailyUpdates: weekDailies.map((du) => du._id),
       });
@@ -213,11 +216,12 @@ const sendScheduledEmail = async (scheduled, update) => {
     return 'skipped';
   }
 
-  // Generate email content
+  // Generate email content, honoring the user's summary-mode preference.
+  const summaryMode = await getSummaryMode(scheduled.userId);
   const emailContent =
     scheduled.type === 'daily'
-      ? emailTemplates.dailyUpdate(update, user)
-      : emailTemplates.weeklySummary(update, user);
+      ? emailTemplates.dailyUpdate(update, user, { summaryMode })
+      : emailTemplates.weeklySummary(update, user, { summaryMode });
 
   try {
     // Send to all recipients

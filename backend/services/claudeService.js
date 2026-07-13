@@ -71,7 +71,8 @@ Return ONLY the formatted update text, nothing else.`;
 
     return {
       formattedOutput,
-      sections
+      sections,
+      aiSummary: deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
@@ -152,12 +153,45 @@ Return ONLY the formatted weekly update text, nothing else.`;
 
     return {
       formattedOutput,
-      sections
+      sections,
+      aiSummary: deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
     throw new Error(`Failed to generate weekly update with Claude API: ${error.message}`);
   }
+};
+
+/**
+ * Derive a short, one-glance summary from an AI-formatted update. Prefers the
+ * first highlights of the progress/achievements section, falling back to the
+ * first bullet lines of the formatted output. No extra API call — this is a
+ * concise view of content the model already produced. Used for the "summary"
+ * notification mode (vs the full formatted output).
+ */
+export const deriveSummary = (formattedOutput = '', sections = {}) => {
+  const highlights =
+    (sections?.todaysProgress?.length && sections.todaysProgress) ||
+    (sections?.ongoingWork?.length && sections.ongoingWork) ||
+    [];
+
+  if (highlights.length > 0) {
+    return highlights.slice(0, 2).join(' ').trim().slice(0, 280);
+  }
+
+  const bullets = formattedOutput
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('-'))
+    .map((line) => line.replace(/^-\s*/, ''));
+
+  if (bullets.length > 0) {
+    return bullets.slice(0, 2).join(' ').slice(0, 280);
+  }
+
+  // Last resort: first non-empty line after the header.
+  const lines = formattedOutput.split('\n').map((l) => l.trim()).filter(Boolean);
+  return (lines[1] || lines[0] || '').slice(0, 280);
 };
 
 /**

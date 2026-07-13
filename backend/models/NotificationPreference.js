@@ -37,6 +37,13 @@ const notificationPreferenceSchema = new mongoose.Schema(
       sendDailySummary: { type: Boolean, default: false },
       sendWeeklySummary: { type: Boolean, default: true },
     },
+    // How much of an update to include in notifications:
+    // 'full' = the full formatted output, 'summary' = the short aiSummary.
+    summaryMode: {
+      type: String,
+      enum: ['full', 'summary'],
+      default: 'full',
+    },
     // Quiet hours (when not to send notifications)
     quietHours: {
       enabled: { type: Boolean, default: false },

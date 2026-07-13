@@ -82,6 +82,12 @@ jest.unstable_mockModule('../../../models/Update.js', () => ({
   default: MockUpdate,
 }));
 
+// NotificationPreference is read by updateFormatter.getSummaryMode; return null
+// so the mode defaults to 'full' (no DB connection in this unit test).
+jest.unstable_mockModule('../../../models/NotificationPreference.js', () => ({
+  default: { findOne: () => ({ select: () => Promise.resolve(null) }) },
+}));
+
 // ---------------------------------------------------------------------------
 // Import service under test AFTER mocks.
 // ---------------------------------------------------------------------------
@@ -219,8 +225,8 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findResult = [
-        { companyId: { name: 'Acme' }, aiSummary: 'Did things' },
-        { companyId: null },
+        { companyId: { name: 'Acme' }, formattedOutput: 'Did things' },
+        { companyId: null, formattedOutput: '' },
       ];
       const ctx = makeCtx();
       await commandHandlers.today(ctx);
@@ -263,7 +269,7 @@ describe('Telegram Bot Service', () => {
       start();
       foundUser = { _id: 'u1' };
       findResult = [
-        { companyId: { name: 'Acme' }, aiSummary: 'Weekly recap', dailyUpdates: [1, 2, 3] },
+        { companyId: { name: 'Acme' }, type: 'weekly', formattedOutput: 'Weekly recap', dailyUpdates: [1, 2, 3] },
       ];
       const ctx = makeCtx();
       await commandHandlers.week(ctx);
@@ -273,14 +279,14 @@ describe('Telegram Bot Service', () => {
       expect(text).toContain('Updates: 3');
     });
 
-    it('renders the weekly summary with no company and no AI summary', async () => {
+    it('renders the weekly summary with no company', async () => {
       start();
       foundUser = { _id: 'u1' };
-      findResult = [{ companyId: null, dailyUpdates: undefined }];
+      findResult = [{ companyId: null, type: 'weekly', dailyUpdates: undefined }];
       const ctx = makeCtx();
       await commandHandlers.week(ctx);
       const text = replyText(ctx);
-      expect(text).toContain('Weekly Summary - All Companies');
+      expect(text).toContain('Weekly Summary - No Company');
       expect(text).toContain('Updates: 0');
     });
 
@@ -348,8 +354,7 @@ describe('Telegram Bot Service', () => {
       findOneResult = {
         companyId: { name: 'Acme' },
         createdAt: new Date('2026-01-01'),
-        aiSummary: 'Summary here',
-        content: 'x'.repeat(600),
+        formattedOutput: 'Summary here ' + 'x'.repeat(600),
       };
       const ctx = makeCtx();
       await commandHandlers.latest(ctx);
@@ -366,7 +371,7 @@ describe('Telegram Bot Service', () => {
       findOneResult = {
         companyId: null,
         createdAt: new Date('2026-01-01'),
-        content: 'short content',
+        formattedOutput: 'short content',
       };
       const ctx = makeCtx();
       await commandHandlers.latest(ctx);

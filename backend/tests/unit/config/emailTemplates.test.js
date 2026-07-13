@@ -15,10 +15,10 @@ describe('emailTemplates (config/email.js)', () => {
       const start = new Date('2026-01-05');
       const end = new Date('2026-01-11');
       const update = {
+        type: 'weekly',
         companyId: { name: 'Acme' },
         dateRange: { start, end },
-        aiSummary: 'Weekly recap',
-        content: 'body',
+        formattedOutput: 'Weekly recap',
         tags: [],
         dailyUpdates: ['a', 'b', 'c'],
       };
@@ -36,28 +36,48 @@ describe('emailTemplates (config/email.js)', () => {
 
     it('does not throw when company and dateRange are absent', () => {
       expect(() =>
-        emailTemplates.weeklySummary({ tags: [] }, baseUser)
+        emailTemplates.weeklySummary({ type: 'weekly', tags: [] }, baseUser)
       ).not.toThrow();
     });
   });
 
   describe('dailyUpdate', () => {
-    it('renders a subject with the company name', () => {
+    it('renders the company name and the formatted output as the body', () => {
       const update = {
         companyId: { name: 'Globex' },
-        createdAt: new Date('2026-01-05'),
-        content: 'did things',
-        tags: [],
+        date: new Date('2026-01-05'),
+        formattedOutput: 'The full formatted daily update',
+        aiSummary: 'Short summary',
+        tags: [{ name: 'backend' }],
       };
 
       const out = emailTemplates.dailyUpdate(update, baseUser);
 
       expect(out.subject).toContain('Globex');
+      expect(out.html).toContain('The full formatted daily update');
+      expect(out.html).toContain('backend');
+    });
+
+    it('uses the short aiSummary in summary mode', () => {
+      const update = {
+        companyId: { name: 'Globex' },
+        date: new Date('2026-01-05'),
+        formattedOutput: 'The full formatted daily update',
+        aiSummary: 'Short summary',
+        tags: [],
+      };
+
+      const full = emailTemplates.dailyUpdate(update, baseUser, { summaryMode: 'full' });
+      expect(full.html).toContain('The full formatted daily update');
+
+      const summary = emailTemplates.dailyUpdate(update, baseUser, { summaryMode: 'summary' });
+      expect(summary.html).toContain('Short summary');
+      expect(summary.html).not.toContain('The full formatted daily update');
     });
 
     it('falls back to "No Company" when companyId is not populated', () => {
       const out = emailTemplates.dailyUpdate(
-        { createdAt: new Date('2026-01-05'), tags: [] },
+        { date: new Date('2026-01-05'), formattedOutput: 'x', tags: [] },
         baseUser
       );
       expect(out.subject).toContain('No Company');

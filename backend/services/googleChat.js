@@ -2,6 +2,7 @@
  * Google Chat Service
  * Handles sending messages to Google Chat via webhooks
  */
+import { formatUpdate, truncate } from './updateFormatter.js';
 
 /**
  * Send message to Google Chat webhook
@@ -54,31 +55,28 @@ export const sendGoogleChatCard = async (webhookUrl, card) => {
 /**
  * Send daily update to Google Chat
  */
-export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
-  const companyName = update.companyId?.name || 'No Company';
-  const date = new Date(update.date || update.createdAt).toLocaleDateString();
-  const content = update.formattedOutput || '';
+export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user, options = {}) => {
+  const view = formatUpdate(update, options);
+  const date = view.date ? new Date(view.date).toLocaleDateString() : '';
 
   const card = {
     header: {
       title: '📝 Daily Update',
-      subtitle: `${companyName} - ${date}`,
+      subtitle: `${view.companyLabel} - ${date}`,
     },
     sections: [
       {
         widgets: [
           {
             textParagraph: {
-              text: `<b>Update Content:</b><br>${content.substring(0, 500)}${
-                content.length > 500 ? '...' : ''
-              }`,
+              text: `<b>Update Content:</b><br>${truncate(view.body)}`,
             },
           },
-          ...(update.tags && update.tags.length > 0
+          ...(view.tags.length > 0
             ? [
                 {
                   textParagraph: {
-                    text: `<b>Tags:</b> ${update.tags.map((tag) => tag.name).join(', ')}`,
+                    text: `<b>Tags:</b> ${view.tags.join(', ')}`,
                   },
                 },
               ]
@@ -99,39 +97,34 @@ export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
 /**
  * Send weekly summary to Google Chat
  */
-export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user) => {
-  const companyName = update.companyId?.name || 'No Company';
-  const startDate = new Date(update.dateRange?.start).toLocaleDateString();
-  const endDate = new Date(update.dateRange?.end).toLocaleDateString();
-  const content = update.formattedOutput || '';
+export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user, options = {}) => {
+  const view = formatUpdate(update, options);
+  const startDate = new Date(view.dateRange?.start).toLocaleDateString();
+  const endDate = new Date(view.dateRange?.end).toLocaleDateString();
 
   const card = {
     header: {
       title: '📊 Weekly Summary',
-      subtitle: `${companyName} - ${startDate} to ${endDate}`,
+      subtitle: `${view.companyLabel} - ${startDate} to ${endDate}`,
     },
     sections: [
       {
         widgets: [
           {
             textParagraph: {
-              text: `<b>📈 Statistics:</b><br>Updates Included: ${
-                update.dailyUpdates?.length || 0
-              }`,
+              text: `<b>📈 Statistics:</b><br>Updates Included: ${view.dailyUpdatesCount}`,
             },
           },
           {
             textParagraph: {
-              text: `<b>Weekly Summary:</b><br>${content.substring(0, 500)}${
-                content.length > 500 ? '...' : ''
-              }`,
+              text: `<b>Weekly Summary:</b><br>${truncate(view.body)}`,
             },
           },
-          ...(update.tags && update.tags.length > 0
+          ...(view.tags.length > 0
             ? [
                 {
                   textParagraph: {
-                    text: `<b>Tags:</b> ${update.tags.map((tag) => tag.name).join(', ')}`,
+                    text: `<b>Tags:</b> ${view.tags.join(', ')}`,
                   },
                 },
               ]

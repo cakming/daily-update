@@ -11,7 +11,7 @@ jest.unstable_mockModule('@anthropic-ai/sdk', () => ({
 }));
 
 // Dynamic import after mocking
-const { processDailyUpdate, processWeeklyUpdate } = await import('../../../services/claudeService.js');
+const { processDailyUpdate, processWeeklyUpdate, deriveSummary } = await import('../../../services/claudeService.js');
 
 describe('Claude Service', () => {
   beforeEach(() => {
@@ -20,6 +20,36 @@ describe('Claude Service', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('deriveSummary', () => {
+    it('prefers the first progress highlights', () => {
+      const summary = deriveSummary('ignored', {
+        todaysProgress: ['Shipped login', 'Fixed billing bug', 'Third item'],
+        ongoingWork: ['Working on X'],
+      });
+      expect(summary).toContain('Shipped login');
+      expect(summary).toContain('Fixed billing bug');
+      expect(summary).not.toContain('Third item'); // only the first two
+    });
+
+    it('falls back to ongoingWork, then to formatted bullets', () => {
+      expect(
+        deriveSummary('x', { todaysProgress: [], ongoingWork: ['Ongoing thing'] })
+      ).toContain('Ongoing thing');
+
+      const fromBullets = deriveSummary(
+        '🗓️ Daily Update\n\n✅ Progress\n- Bullet one\n- Bullet two',
+        {}
+      );
+      expect(fromBullets).toContain('Bullet one');
+    });
+
+    it('caps the length and tolerates empty input', () => {
+      const long = deriveSummary('x', { todaysProgress: ['y'.repeat(500)] });
+      expect(long.length).toBeLessThanOrEqual(280);
+      expect(deriveSummary('', {})).toBe('');
+    });
   });
 
   describe('processDailyUpdate', () => {

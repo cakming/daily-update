@@ -45,6 +45,7 @@ export const updatePreferences = async (req, res) => {
       inAppNotifications,
       botNotifications,
       quietHours,
+      summaryMode,
     } = req.body;
 
     let preferences = await NotificationPreference.findOne({ userId: req.user._id });
@@ -57,8 +58,12 @@ export const updatePreferences = async (req, res) => {
         inAppNotifications,
         botNotifications,
         quietHours,
+        summaryMode,
       });
     } else {
+      if (summaryMode !== undefined) {
+        preferences.summaryMode = summaryMode;
+      }
       // Update existing preferences
       if (emailNotifications) {
         preferences.emailNotifications = {
