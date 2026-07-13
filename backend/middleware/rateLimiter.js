@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
  * Limits: 100 requests per 15 minutes per IP
  */
 export const apiLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
@@ -20,6 +21,7 @@ export const apiLimiter = rateLimit({
  * Limits: 5 requests per 15 minutes per IP (stricter for auth endpoints)
  */
 export const authLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // Limit each IP to 5 login/register attempts per windowMs
   message: {
@@ -36,6 +38,7 @@ export const authLimiter = rateLimit({
  * Limits: 10 requests per minute per IP (AI calls are expensive)
  */
 export const aiLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000, // 1 minute
   max: 10, // Limit each IP to 10 AI generations per minute
   message: {
@@ -51,6 +54,7 @@ export const aiLimiter = rateLimit({
  * Limits: 3 requests per hour per IP
  */
 export const strictLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3,
   message: {
@@ -66,6 +70,7 @@ export const strictLimiter = rateLimit({
  * Limits: 10 requests per 15 minutes (prevent export abuse)
  */
 export const exportLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10,
   message: {
@@ -81,6 +86,7 @@ export const exportLimiter = rateLimit({
  * Limits: 3 requests per hour (very restrictive to prevent abuse)
  */
 export const resetPasswordLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3,
   message: {

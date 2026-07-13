@@ -1,11 +1,12 @@
 name: E2E Tests
 
+# Disabled auto-triggering (manual dispatch only; workflow_call kept so ci.yml
+# can still reference it). GitHub Actions cannot start jobs on this account, so
+# push/pull_request runs only produced failing checks that blocked merges.
+# Re-enable by restoring the push/pull_request triggers once Actions is available.
 on:
-  push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master, develop ]
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   e2e:
@@ -53,6 +54,10 @@ jobs:
           PORT: 5000
           MONGODB_URI: mongodb://localhost:27017/daily-update-e2e
           JWT_SECRET: test-jwt-secret-for-e2e
+          # generateToken() passes `expiresIn: process.env.JWT_EXPIRE` to
+          # jwt.sign(); if unset, jsonwebtoken rejects the explicit `undefined`
+          # and registration/login 500s. Provide a valid timespan.
+          JWT_EXPIRE: 7d
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLIENT_URL: http://localhost:3000
         run: |
@@ -63,6 +68,11 @@ jobs:
 
       - name: Run E2E tests
         working-directory: ./frontend
+        # AI-dependent specs (daily-updates / weekly-updates) call the real
+        # Anthropic API and are opt-in: they skip unless RUN_AI_E2E is set, so we
+        # deliberately do NOT set it here. A dummy/empty ANTHROPIC_API_KEY is fine
+        # for the smoke/auth flows, which need no AI. To exercise the AI specs
+        # locally, provide a live key and set RUN_AI_E2E=1.
         env:
           VITE_API_URL: http://localhost:5000/api
         run: npm run test:e2e

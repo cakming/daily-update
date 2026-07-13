@@ -3,26 +3,25 @@ import { test, expect } from '@playwright/test';
 /**
  * E2E smoke specs (Playwright).
  *
- * REQUIRES BOTH SERVERS RUNNING:
- *   - backend API on http://localhost:5000
- *   - frontend dev server on http://localhost:3000 (playwright.config.js
- *     starts `npm run dev` via its `webServer` block and uses baseURL :3000)
- * These specs are NOT run in the CI/test session here because no servers are
- * available; they are authored to be run manually / in an environment that has
- * both processes up.
+ * The backend must be reachable on http://localhost:5000; the frontend is
+ * started automatically by playwright.config.js `webServer` (`npm run dev` on
+ * :3000). In CI (.github/workflows/e2e-tests.yml) the backend is started and
+ * Chromium is installed via `npx playwright install chromium`.
  *
- * BROWSER EXECUTABLE:
- *   The Playwright package installed here expects a newer Chromium build than
- *   the one pre-installed in this environment, so we pin the executable to the
- *   pre-installed binary. If you run these where Playwright's own managed
- *   browser is available, you can drop this `test.use(...)` block.
- *   (We deliberately do not edit playwright.config.js to add this globally.)
+ * Browser: the config uses Playwright's managed Chromium by default. For a
+ * local run against a pre-installed binary, set PW_CHROMIUM_PATH (see
+ * playwright.config.js) — no per-spec launchOptions needed.
+ *
+ * Selector note: the Login page (src/pages/Login.jsx) renders BOTH the Login
+ * and Register tab panels in the DOM (Chakra v2 Tabs). The email/password
+ * placeholders therefore appear twice, so we scope queries to a single tab
+ * panel (identified by the register-only "Your name" placeholder) to avoid
+ * Playwright strict-mode ambiguity.
  */
-test.use({
-  launchOptions: {
-    executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-  },
-});
+
+// The register panel is the only tab panel containing the "Your name" input.
+const registerPanel = (page) =>
+  page.getByRole('tabpanel').filter({ has: page.getByPlaceholder('Your name') });
 
 test.describe('Smoke', () => {
   test('loads /login and shows the app title', async ({ page }) => {
@@ -44,13 +43,13 @@ test.describe('Smoke', () => {
     // Switch to the Register tab.
     await page.getByRole('tab', { name: /register/i }).click();
 
+    const panel = registerPanel(page);
     const uniqueEmail = `e2e.smoke.${Date.now()}@example.com`;
-    await page.getByLabel(/name/i).fill('E2E Smoke User');
-    await page.getByLabel(/email/i).fill(uniqueEmail);
-    // Password label appears on both tabs; scope to the visible register panel.
-    await page.getByLabel(/password/i).first().fill('TestPassword123!');
+    await panel.getByPlaceholder('Your name').fill('E2E Smoke User');
+    await panel.getByPlaceholder('your@email.com').fill(uniqueEmail);
+    await panel.getByPlaceholder('••••••••').fill('TestPassword123!');
 
-    await page.getByRole('button', { name: /^register$/i }).click();
+    await panel.getByRole('button', { name: /^register$/i }).click();
 
     // Successful registration lands on the dashboard.
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });

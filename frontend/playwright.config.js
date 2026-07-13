@@ -17,6 +17,12 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // In CI we run `npx playwright install chromium`, so the managed browser is
+    // used (leave PW_CHROMIUM_PATH unset). For local runs against a pre-installed
+    // Chromium, export PW_CHROMIUM_PATH=/path/to/chrome.
+    launchOptions: process.env.PW_CHROMIUM_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      : {},
   },
 
   projects: [

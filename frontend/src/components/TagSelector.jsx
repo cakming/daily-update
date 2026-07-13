@@ -140,7 +140,7 @@ const TagSelector = ({ selectedTags = [], onChange }) => {
       {/* Tag Selector Popover */}
       <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} isLazy>
         <PopoverTrigger>
-          <Button variant="outline" w="full">
+          <Button variant="outline" w="full" onClick={() => setIsOpen((o) => !o)}>
             Select Tags
           </Button>
         </PopoverTrigger>

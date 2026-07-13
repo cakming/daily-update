@@ -1,11 +1,23 @@
-import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals';
 import request from 'supertest';
-import app from '../../app.js';
 import { connectTestDB, closeTestDB, clearTestDB } from '../setup/testDb.js';
-import mongoose from 'mongoose';
-import User from '../../models/User.js';
-import Update from '../../models/Update.js';
-import Company from '../../models/Company.js';
+
+// Mock Anthropic SDK before importing app so seeding via POST /api/daily-updates
+// does not make real network calls.
+const mockCreate = jest.fn();
+jest.unstable_mockModule('@anthropic-ai/sdk', () => ({
+  default: jest.fn().mockImplementation(() => ({
+    messages: {
+      create: mockCreate
+    }
+  }))
+}));
+
+// Dynamic imports after mocking
+const { default: app } = await import('../../app.js');
+const { default: User } = await import('../../models/User.js');
+const { default: Update } = await import('../../models/Update.js');
+const { default: Company } = await import('../../models/Company.js');
 
 describe('Export Integration Tests', () => {
   let authToken;
@@ -23,6 +35,13 @@ describe('Export Integration Tests', () => {
   beforeEach(async () => {
     // Clear database before each test
     await clearTestDB();
+
+    // Canned Anthropic response so daily-update creation succeeds during seeding
+    mockCreate.mockResolvedValue({
+      content: [{
+        text: '🗓️ Daily Update — test\n\n✅ Today\'s Progress\n- did work'
+      }]
+    });
 
     // Create test user
     const userRes = await request(app)
@@ -80,12 +99,13 @@ describe('Export Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('totalUpdates');
-      expect(res.body.data).toHaveProperty('dailyUpdates');
-      expect(res.body.data).toHaveProperty('weeklyUpdates');
-      expect(res.body.data).toHaveProperty('availableFormats');
-      expect(res.body.data.totalUpdates).toBeGreaterThanOrEqual(2);
-      expect(Array.isArray(res.body.data.availableFormats)).toBe(true);
+      expect(res.body.data).toHaveProperty('count');
+      expect(res.body.data).toHaveProperty('dateRange');
+      expect(res.body.data).toHaveProperty('types');
+      expect(res.body.data).toHaveProperty('estimatedSizes');
+      expect(res.body.data.count).toBeGreaterThanOrEqual(2);
+      expect(Array.isArray(res.body.data.types)).toBe(true);
+      expect(res.body.data.types).toContain('daily');
     });
 
     test('should filter metadata by company', async () => {
@@ -96,7 +116,9 @@ describe('Export Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.dailyUpdates).toBeGreaterThanOrEqual(1);
+      // Only one seeded update carries this companyId
+      expect(res.body.data.count).toBe(1);
+      expect(res.body.data.types).toContain('daily');
     });
 
     test('should filter metadata by type', async () => {
@@ -126,7 +148,7 @@ describe('Export Integration Tests', () => {
       expect(res.headers['content-type']).toContain('text/csv');
       expect(res.headers['content-disposition']).toContain('attachment');
       expect(res.headers['content-disposition']).toContain('.csv');
-      expect(res.text).toContain('Type,Date');
+      expect(res.text).toContain('Date,Type');
     });
 
     test('should filter CSV export by company', async () => {
@@ -136,7 +158,7 @@ describe('Export Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.text).toContain('Type,Date');
+      expect(res.text).toContain('Date,Type');
     });
 
     test('should filter CSV export by type', async () => {
