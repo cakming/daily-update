@@ -167,6 +167,12 @@ export const emailAPI = {
   sendWeeklySummary: (id, recipients) => api.post(`/email/weekly/${id}`, { recipients }),
 };
 
+export const integrationAPI = {
+  getGoogleChatStatus: () => api.get('/integrations/googlechat/status'),
+  sendGoogleChatDaily: (id) => api.post(`/integrations/googlechat/daily/${id}`),
+  sendGoogleChatWeekly: (id) => api.post(`/integrations/googlechat/weekly/${id}`),
+};
+
 export const scheduleAPI = {
   getAll: (params) => api.get('/schedules', { params }),
   getById: (id) => api.get(`/schedules/${id}`),
