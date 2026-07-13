@@ -168,7 +168,16 @@ export const emailAPI = {
 };
 
 export const integrationAPI = {
+  // Telegram
+  getTelegramStatus: () => api.get('/integrations/telegram/status'),
+  linkTelegram: (telegramId) => api.post('/integrations/telegram/link', { telegramId }),
+  unlinkTelegram: () => api.delete('/integrations/telegram/unlink'),
+  testTelegram: () => api.post('/integrations/telegram/test'),
+  // Google Chat
   getGoogleChatStatus: () => api.get('/integrations/googlechat/status'),
+  linkGoogleChat: (webhookUrl) => api.post('/integrations/googlechat/link', { webhookUrl }),
+  unlinkGoogleChat: () => api.delete('/integrations/googlechat/unlink'),
+  testGoogleChat: () => api.post('/integrations/googlechat/test'),
   sendGoogleChatDaily: (id) => api.post(`/integrations/googlechat/daily/${id}`),
   sendGoogleChatWeekly: (id) => api.post(`/integrations/googlechat/weekly/${id}`),
 };

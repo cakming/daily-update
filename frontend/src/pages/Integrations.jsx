@@ -25,9 +25,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { integrationAPI } from '../services/api';
 
 /**
  * Integrations Page
@@ -58,12 +56,10 @@ const Integrations = () => {
   const fetchIntegrationStatus = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
 
       const [telegramRes, googleChatRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/integrations/telegram/status`, config),
-        axios.get(`${API_BASE_URL}/integrations/googlechat/status`, config),
+        integrationAPI.getTelegramStatus(),
+        integrationAPI.getGoogleChatStatus(),
       ]);
 
       setTelegramLinked(telegramRes.data.data.linked);
@@ -99,14 +95,7 @@ const Integrations = () => {
 
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(
-        `${API_BASE_URL}/integrations/telegram/link`,
-        { telegramId: telegramIdInput },
-        config
-      );
+      await integrationAPI.linkTelegram(telegramIdInput);
 
       toast({
         title: 'Telegram linked successfully',
@@ -136,10 +125,7 @@ const Integrations = () => {
 
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.delete(`${API_BASE_URL}/integrations/telegram/unlink`, config);
+      await integrationAPI.unlinkTelegram();
 
       toast({
         title: 'Telegram unlinked',
@@ -165,10 +151,7 @@ const Integrations = () => {
   const handleTestTelegram = async () => {
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(`${API_BASE_URL}/integrations/telegram/test`, {}, config);
+      await integrationAPI.testTelegram();
 
       toast({
         title: 'Test message sent',
@@ -205,14 +188,7 @@ const Integrations = () => {
 
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(
-        `${API_BASE_URL}/integrations/googlechat/link`,
-        { webhookUrl: googleChatWebhookInput },
-        config
-      );
+      await integrationAPI.linkGoogleChat(googleChatWebhookInput);
 
       toast({
         title: 'Google Chat linked successfully',
@@ -241,10 +217,7 @@ const Integrations = () => {
 
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.delete(`${API_BASE_URL}/integrations/googlechat/unlink`, config);
+      await integrationAPI.unlinkGoogleChat();
 
       toast({
         title: 'Google Chat unlinked',
@@ -270,10 +243,7 @@ const Integrations = () => {
   const handleTestGoogleChat = async () => {
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(`${API_BASE_URL}/integrations/googlechat/test`, {}, config);
+      await integrationAPI.testGoogleChat();
 
       toast({
         title: 'Test message sent',
