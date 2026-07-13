@@ -217,8 +217,8 @@ This email was sent from Daily Update App
    */
   weeklySummary: (update, user) => {
     const companyName = update.companyId?.name || 'No Company';
-    const startDate = new Date(update.period.startDate).toLocaleDateString();
-    const endDate = new Date(update.period.endDate).toLocaleDateString();
+    const startDate = new Date(update.dateRange?.start).toLocaleDateString();
+    const endDate = new Date(update.dateRange?.end).toLocaleDateString();
 
     return {
       subject: `Weekly Summary - ${companyName} - ${startDate} to ${endDate}`,
