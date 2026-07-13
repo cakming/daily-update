@@ -114,10 +114,11 @@ const Search = () => {
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase();
         allResults = allResults.filter(update => {
-          const content = update.content?.toLowerCase() || '';
+          const content = update.formattedOutput?.toLowerCase() || '';
+          const rawInput = update.rawInput?.toLowerCase() || '';
           const aiSummary = update.aiSummary?.toLowerCase() || '';
-          const companyName = update.company?.name?.toLowerCase() || '';
-          return content.includes(term) || aiSummary.includes(term) || companyName.includes(term);
+          const companyName = update.companyId?.name?.toLowerCase() || '';
+          return content.includes(term) || rawInput.includes(term) || aiSummary.includes(term) || companyName.includes(term);
         });
       }
 
@@ -128,8 +129,8 @@ const Search = () => {
         allResults.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       } else if (sortBy === 'company') {
         allResults.sort((a, b) => {
-          const nameA = a.company?.name || '';
-          const nameB = b.company?.name || '';
+          const nameA = a.companyId?.name || '';
+          const nameB = b.companyId?.name || '';
           return nameA.localeCompare(nameB);
         });
       }
@@ -347,8 +348,8 @@ const Search = () => {
                         <Badge colorScheme={update.type === 'daily' ? 'blue' : 'green'}>
                           {update.type === 'daily' ? 'Daily Update' : 'Weekly Summary'}
                         </Badge>
-                        {update.company && (
-                          <Badge colorScheme="purple">{update.company.name}</Badge>
+                        {update.companyId && (
+                          <Badge colorScheme="purple">{update.companyId.name}</Badge>
                         )}
                         {update.tags && update.tags.length > 0 && (
                           <>
@@ -381,13 +382,13 @@ const Search = () => {
                     )}
 
                     <Text color="gray.600" noOfLines={3}>
-                      {update.content}
+                      {update.formattedOutput}
                     </Text>
 
-                    {update.type === 'weekly' && update.period && (
+                    {update.type === 'weekly' && update.dateRange && (
                       <Text fontSize="sm" color="gray.500">
-                        Period: {new Date(update.period.startDate).toLocaleDateString()} -{' '}
-                        {new Date(update.period.endDate).toLocaleDateString()}
+                        Period: {new Date(update.dateRange.start).toLocaleDateString()} -{' '}
+                        {new Date(update.dateRange.end).toLocaleDateString()}
                       </Text>
                     )}
                   </VStack>

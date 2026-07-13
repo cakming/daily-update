@@ -37,6 +37,7 @@ const NotificationPreferences = () => {
   const [saving, setSaving] = useState(false);
 
   const [preferences, setPreferences] = useState({
+    summaryMode: 'full',
     emailNotifications: {
       enabled: true,
       dailyDigest: false,
@@ -77,7 +78,7 @@ const NotificationPreferences = () => {
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
       const response = await axios.get(`${API_BASE_URL}/notification-preferences`, config);
-      setPreferences(response.data.data);
+      setPreferences({ summaryMode: 'full', ...response.data.data });
     } catch (error) {
       toast({
         title: 'Failed to load preferences',
@@ -201,6 +202,29 @@ const NotificationPreferences = () => {
               Customize how and when you receive notifications. Changes are saved automatically.
             </Text>
           </Alert>
+
+          {/* Notification content format */}
+          <Card p={6}>
+            <VStack align="start" gap={4}>
+              <VStack align="start" gap={1}>
+                <Heading size="md">📄 Notification Content</Heading>
+                <Text fontSize="sm" color="gray.600">
+                  How much of each update to include in emails, Telegram and Google Chat
+                </Text>
+              </VStack>
+              <Select
+                maxW="sm"
+                value={preferences.summaryMode || 'full'}
+                onChange={(e) =>
+                  setPreferences((prev) => ({ ...prev, summaryMode: e.target.value }))
+                }
+                aria-label="Notification content mode"
+              >
+                <option value="full">Full update (complete formatted output)</option>
+                <option value="summary">Short summary (AI-generated highlights)</option>
+              </Select>
+            </VStack>
+          </Card>
 
           {/* Email Notifications */}
           <Card p={6}>

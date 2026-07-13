@@ -132,12 +132,12 @@ const EmailModal = ({ isOpen, onClose, update, updateType }) => {
                 <Badge colorScheme={updateType === 'daily' ? 'blue' : 'green'}>
                   {updateType === 'daily' ? 'Daily Update' : 'Weekly Summary'}
                 </Badge>
-                {update.company && (
-                  <Badge colorScheme="purple">{update.company.name}</Badge>
+                {update.companyId && (
+                  <Badge colorScheme="purple">{update.companyId.name}</Badge>
                 )}
               </HStack>
               <Text fontSize="sm" color="gray.600" noOfLines={2}>
-                {update.aiSummary || update.content}
+                {update.aiSummary || update.formattedOutput}
               </Text>
               <Text fontSize="xs" color="gray.500">
                 {new Date(update.createdAt).toLocaleDateString()}
