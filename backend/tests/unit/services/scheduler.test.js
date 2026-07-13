@@ -48,10 +48,12 @@ jest.unstable_mockModule('../../../models/ScheduledUpdate.js', () => ({
 // ---------------------------------------------------------------------------
 let updateSaveShouldReject = false;
 let updateCount = 0;
+let createdUpdates = []; // captures each `new DailyUpdate/WeeklyUpdate(...)`
 function MockUpdate(data) {
   Object.assign(this, data);
   updateCount += 1;
   this._id = `update-${updateCount}`;
+  createdUpdates.push(this);
   this.save = jest.fn(() =>
     updateSaveShouldReject
       ? Promise.reject(new Error('save failed'))
@@ -60,10 +62,30 @@ function MockUpdate(data) {
   this.populate = jest.fn(() => Promise.resolve(this));
 }
 MockUpdate.find = jest.fn(() => ({
-  select: jest.fn(() => Promise.resolve([{ _id: 'daily-1' }, { _id: 'daily-2' }])),
+  sort: jest.fn(() =>
+    Promise.resolve([
+      { _id: 'daily-1', date: new Date('2026-01-01'), rawInput: 'Mon work' },
+      { _id: 'daily-2', date: new Date('2026-01-02'), rawInput: 'Tue work' },
+    ])
+  ),
 }));
 jest.unstable_mockModule('../../../models/Update.js', () => ({
   default: MockUpdate,
+}));
+
+// ---------------------------------------------------------------------------
+// Claude AI service mock — the scheduler generates content through the same
+// pipeline the controllers use.
+// ---------------------------------------------------------------------------
+const processDailyUpdate = jest.fn(() =>
+  Promise.resolve({ formattedOutput: 'Formatted daily', sections: { todaysProgress: ['x'] } })
+);
+const processWeeklyUpdate = jest.fn(() =>
+  Promise.resolve({ formattedOutput: 'Formatted weekly', sections: { todaysProgress: ['x'] } })
+);
+jest.unstable_mockModule('../../../services/claudeService.js', () => ({
+  processDailyUpdate,
+  processWeeklyUpdate,
 }));
 
 // ---------------------------------------------------------------------------
@@ -158,6 +180,7 @@ describe('Scheduler Service', () => {
     dueUpdates = [];
     findShouldReject = false;
     updateSaveShouldReject = false;
+    createdUpdates = [];
     historyEntries = [];
     historySaveShouldReject = false;
     foundUser = { _id: 'user1', name: 'Test User', email: 'user@example.com' };
@@ -208,11 +231,14 @@ describe('Scheduler Service', () => {
 
       dueUpdates = updates;
       historyEntries = [];
+      createdUpdates = [];
       sendMail.mockClear();
       getTransporter.mockClear();
       emailTemplates.dailyUpdate.mockClear();
       emailTemplates.weeklySummary.mockClear();
       MockUpdate.find.mockClear();
+      processDailyUpdate.mockClear();
+      processWeeklyUpdate.mockClear();
 
       cronCallback();
       await flush();
@@ -230,6 +256,13 @@ describe('Scheduler Service', () => {
       expect(h.emailSent).toBe(true);
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(emailTemplates.dailyUpdate).toHaveBeenCalled();
+      // Generated via the AI pipeline and built to match the Update schema.
+      expect(processDailyUpdate).toHaveBeenCalledWith('Some content', expect.any(Date));
+      const created = createdUpdates.find((u) => u.type === 'daily');
+      expect(created).toBeDefined();
+      expect(created.rawInput).toBe('Some content');
+      expect(created.formattedOutput).toBe('Formatted daily');
+      expect(created.date).toBeInstanceOf(Date);
       // Recurring schedule -> next run recomputed, still active.
       expect(sched.calculateNextRun).toHaveBeenCalled();
       expect(sched.isActive).toBe(true);
@@ -246,10 +279,17 @@ describe('Scheduler Service', () => {
       await runCallback([sched]);
 
       expect(MockUpdate.find).toHaveBeenCalled(); // gathered daily updates for the period
+      expect(processWeeklyUpdate).toHaveBeenCalled();
       const h = historyEntries[0];
       expect(h.status).toBe('success');
       expect(h.updateModel).toBe('WeeklyUpdate');
       expect(emailTemplates.weeklySummary).toHaveBeenCalled();
+      // Built to match the Update schema, with the week's dailies linked.
+      const created = createdUpdates.find((u) => u.type === 'weekly');
+      expect(created).toBeDefined();
+      expect(created.dateRange).toEqual({ start: expect.any(Date), end: expect.any(Date) });
+      expect(created.formattedOutput).toBe('Formatted weekly');
+      expect(created.dailyUpdates).toEqual(['daily-1', 'daily-2']);
       // One-time schedule is deactivated instead of rescheduled.
       expect(sched.isActive).toBe(false);
       expect(sched.calculateNextRun).not.toHaveBeenCalled();

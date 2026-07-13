@@ -20,6 +20,7 @@ describe('emailTemplates (config/email.js)', () => {
         aiSummary: 'Weekly recap',
         content: 'body',
         tags: [],
+        dailyUpdates: ['a', 'b', 'c'],
       };
 
       const out = emailTemplates.weeklySummary(update, baseUser);
@@ -29,6 +30,8 @@ describe('emailTemplates (config/email.js)', () => {
       expect(out.subject).toContain(start.toLocaleDateString());
       expect(out.subject).toContain(end.toLocaleDateString());
       expect(out.html).toContain('Weekly recap');
+      // The linked daily-update count renders (was always 0 before the field existed).
+      expect(out.html).toContain('Updates Included: 3');
     });
 
     it('does not throw when company and dateRange are absent', () => {
