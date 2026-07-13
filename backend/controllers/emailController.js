@@ -46,7 +46,7 @@ export const sendDailyUpdate = async (req, res) => {
 
     // Get daily update
     const update = await DailyUpdate.findById(id)
-      .populate('company')
+      .populate('companyId')
       .populate('tags');
 
     if (!update) {
@@ -139,9 +139,8 @@ export const sendWeeklySummary = async (req, res) => {
 
     // Get weekly update
     const update = await WeeklyUpdate.findById(id)
-      .populate('company')
-      .populate('tags')
-      .populate('dailyUpdates');
+      .populate('companyId')
+      .populate('tags');
 
     if (!update) {
       return res.status(404).json({

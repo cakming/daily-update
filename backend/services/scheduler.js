@@ -61,13 +61,13 @@ const executeScheduledUpdate = async (scheduled) => {
       // Create daily update
       const dailyUpdate = new DailyUpdate({
         userId: scheduled.userId,
-        company: scheduled.company?._id,
+        companyId: scheduled.company?._id,
         content: scheduled.content,
         tags: scheduled.tags.map((tag) => tag._id),
       });
 
       createdUpdate = await dailyUpdate.save();
-      await createdUpdate.populate(['company', 'tags']);
+      await createdUpdate.populate(['companyId', 'tags']);
 
       console.log(`Created daily update ${createdUpdate._id}`);
     } else if (scheduled.type === 'weekly') {
@@ -78,13 +78,13 @@ const executeScheduledUpdate = async (scheduled) => {
       // Get daily updates for the period
       const dailyUpdates = await DailyUpdate.find({
         userId: scheduled.userId,
-        company: scheduled.company?._id,
+        companyId: scheduled.company?._id,
         createdAt: { $gte: startDate, $lte: endDate },
       }).select('_id');
 
       const weeklyUpdate = new WeeklyUpdate({
         userId: scheduled.userId,
-        company: scheduled.company?._id,
+        companyId: scheduled.company?._id,
         content: scheduled.content,
         tags: scheduled.tags.map((tag) => tag._id),
         period: {
@@ -95,18 +95,19 @@ const executeScheduledUpdate = async (scheduled) => {
       });
 
       createdUpdate = await weeklyUpdate.save();
-      await createdUpdate.populate(['company', 'tags']);
+      await createdUpdate.populate(['companyId', 'tags']);
 
       console.log(`Created weekly update ${createdUpdate._id}`);
     }
 
-    // Send email if enabled
+    // Send email if enabled. sendScheduledEmail reports its own outcome
+    // ('sent' | 'skipped' | 'failed') instead of throwing on an SMTP error, so a
+    // failed send is recorded as a "partial" run (update created, email failed)
+    // while a graceful skip (not configured / no user) stays "success".
     if (scheduled.sendEmail && scheduled.recipients && scheduled.recipients.length > 0 && createdUpdate) {
-      try {
-        await sendScheduledEmail(scheduled, createdUpdate);
-        emailSent = true;
-      } catch (emailError) {
-        console.error('Failed to send scheduled email:', emailError);
+      const emailResult = await sendScheduledEmail(scheduled, createdUpdate);
+      emailSent = emailResult === 'sent';
+      if (emailResult === 'failed') {
         status = 'partial'; // Update created but email failed
       }
     }
@@ -167,27 +168,30 @@ const executeScheduledUpdate = async (scheduled) => {
 /**
  * Send email for scheduled update
  */
+// Returns the send outcome so the caller can distinguish a genuine send
+// failure ('failed' -> partial run) from an intentional skip ('skipped' ->
+// still a success) or a successful send ('sent').
 const sendScheduledEmail = async (scheduled, update) => {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.log('Email not configured, skipping email send');
+    return 'skipped';
+  }
+
+  // Get user
+  const user = await User.findById(scheduled.userId);
+  if (!user) {
+    console.log('User not found, skipping email send');
+    return 'skipped';
+  }
+
+  // Generate email content
+  const emailContent =
+    scheduled.type === 'daily'
+      ? emailTemplates.dailyUpdate(update, user)
+      : emailTemplates.weeklySummary(update, user);
+
   try {
-    const transporter = getTransporter();
-    if (!transporter) {
-      console.log('Email not configured, skipping email send');
-      return;
-    }
-
-    // Get user
-    const user = await User.findById(scheduled.userId);
-    if (!user) {
-      console.log('User not found, skipping email send');
-      return;
-    }
-
-    // Generate email content
-    const emailContent =
-      scheduled.type === 'daily'
-        ? emailTemplates.dailyUpdate(update, user)
-        : emailTemplates.weeklySummary(update, user);
-
     // Send to all recipients
     const sendPromises = scheduled.recipients.map((recipient) =>
       transporter.sendMail({
@@ -204,8 +208,10 @@ const sendScheduledEmail = async (scheduled, update) => {
     await Promise.all(sendPromises);
 
     console.log(`Email sent to ${scheduled.recipients.length} recipient(s) for scheduled update ${scheduled._id}`);
+    return 'sent';
   } catch (error) {
     console.error(`Error sending scheduled email:`, error);
+    return 'failed';
   }
 };
 

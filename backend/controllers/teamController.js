@@ -78,9 +78,7 @@ export const getTeams = async (req, res) => {
 // @access  Private
 export const getTeam = async (req, res) => {
   try {
-    const team = await Team.findById(req.params.id)
-      .populate('owner', 'name email')
-      .populate('members.userId', 'name email');
+    const team = await Team.findById(req.params.id);
 
     if (!team) {
       return res.status(404).json({
@@ -89,13 +87,21 @@ export const getTeam = async (req, res) => {
       });
     }
 
-    // Check if user is a member
+    // Check membership BEFORE populating: isMember compares
+    // member.userId.toString() against the user id, which only matches while
+    // member.userId is still an ObjectId. Populating it first turns it into a
+    // document, so the comparison would fail and lock out legitimate members.
     if (!team.isMember(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: 'You do not have access to this team'
       });
     }
+
+    await team.populate([
+      { path: 'owner', select: 'name email' },
+      { path: 'members.userId', select: 'name email' }
+    ]);
 
     res.status(200).json({
       success: true,
