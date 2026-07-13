@@ -106,14 +106,13 @@ describe('Google Chat Service', () => {
   describe('sendDailyUpdateToGoogleChat', () => {
     const user = { name: 'Alice' };
 
-    it('should build a full card with company, aiSummary and tags', async () => {
+    it('builds a card from real Update fields (companyId, formattedOutput, tags)', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
-        createdAt: '2026-01-15T10:00:00Z',
-        company: { name: 'Acme Corp' },
-        aiSummary: 'Shipped the login flow',
-        content: 'Worked on authentication and tests.',
+        date: '2026-01-15T10:00:00Z',
+        companyId: { name: 'Acme Corp' },
+        formattedOutput: 'Worked on authentication and tests.',
         tags: [{ name: 'backend' }, { name: 'auth' }],
       };
 
@@ -125,20 +124,18 @@ describe('Google Chat Service', () => {
       expect(card.header.subtitle).toContain('Acme Corp');
 
       const widgetText = card.sections[0].widgets.map((w) => w.textParagraph.text).join('\n');
-      expect(widgetText).toContain('AI Summary');
-      expect(widgetText).toContain('Shipped the login flow');
       expect(widgetText).toContain('Worked on authentication and tests.');
       expect(widgetText).toContain('Tags:</b> backend, auth');
       expect(widgetText).toContain('From: Alice');
     });
 
-    it('should omit aiSummary and tags widgets when absent, default company name', async () => {
+    it('omits the tags widget when absent and defaults the company name', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
-        createdAt: '2026-01-15T10:00:00Z',
-        content: 'Simple update with no extras.',
-        // no company, no aiSummary, no tags
+        date: '2026-01-15T10:00:00Z',
+        formattedOutput: 'Simple update with no extras.',
+        // no companyId, no tags
       };
 
       const result = await sendDailyUpdateToGoogleChat(WEBHOOK, update, user);
@@ -148,21 +145,19 @@ describe('Google Chat Service', () => {
       expect(card.header.subtitle).toContain('No Company');
 
       const widgetText = card.sections[0].widgets.map((w) => w.textParagraph.text).join('\n');
-      expect(widgetText).not.toContain('AI Summary');
       expect(widgetText).not.toContain('Tags:');
       expect(widgetText).toContain('Simple update with no extras.');
-      // aiSummary(0) + content(1) + from(1) = 2 widgets when both optional blocks absent
+      // content(1) + from(1) = 2 widgets when tags absent
       expect(card.sections[0].widgets).toHaveLength(2);
     });
 
-    it('should truncate content longer than 500 chars with ellipsis', async () => {
+    it('truncates content longer than 500 chars with ellipsis', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
-      const longContent = 'x'.repeat(600);
       const update = {
-        createdAt: '2026-01-15T10:00:00Z',
-        company: { name: 'Acme' },
-        content: longContent,
+        date: '2026-01-15T10:00:00Z',
+        companyId: { name: 'Acme' },
+        formattedOutput: 'x'.repeat(600),
       };
 
       await sendDailyUpdateToGoogleChat(WEBHOOK, update, user);
@@ -175,10 +170,10 @@ describe('Google Chat Service', () => {
       expect(contentWidget.textParagraph.text).not.toContain('x'.repeat(501));
     });
 
-    it('should propagate false when underlying send fails', async () => {
+    it('propagates false when the underlying send fails', async () => {
       global.fetch.mockResolvedValue({ ok: false, statusText: 'Server Error' });
 
-      const update = { createdAt: '2026-01-15T10:00:00Z', content: 'hi' };
+      const update = { date: '2026-01-15T10:00:00Z', formattedOutput: 'hi' };
       const result = await sendDailyUpdateToGoogleChat(WEBHOOK, update, user);
 
       expect(result).toBe(false);
@@ -188,14 +183,13 @@ describe('Google Chat Service', () => {
   describe('sendWeeklySummaryToGoogleChat', () => {
     const user = { name: 'Bob' };
 
-    it('should build a full weekly card with stats, aiSummary and tags', async () => {
+    it('builds a weekly card from real fields (dateRange, formattedOutput, dailyUpdates)', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
-        period: { startDate: '2026-01-05', endDate: '2026-01-11' },
-        company: { name: 'Globex' },
-        aiSummary: 'Productive week',
-        content: 'Delivered several features.',
+        dateRange: { start: '2026-01-05', end: '2026-01-11' },
+        companyId: { name: 'Globex' },
+        formattedOutput: 'Delivered several features.',
         dailyUpdates: [{}, {}, {}],
         tags: [{ name: 'sprint' }],
       };
@@ -208,21 +202,19 @@ describe('Google Chat Service', () => {
       expect(card.header.subtitle).toContain('Globex');
 
       const widgetText = card.sections[0].widgets.map((w) => w.textParagraph.text).join('\n');
-      expect(widgetText).toContain('AI Summary');
-      expect(widgetText).toContain('Productive week');
       expect(widgetText).toContain('Updates Included: 3');
       expect(widgetText).toContain('Delivered several features.');
       expect(widgetText).toContain('Tags:</b> sprint');
       expect(widgetText).toContain('From: Bob');
     });
 
-    it('should default stats to 0, omit optional widgets, default company name', async () => {
+    it('defaults stats to 0, omits the tags widget, defaults the company name', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
-        period: { startDate: '2026-01-05', endDate: '2026-01-11' },
-        content: 'Quiet week.',
-        // no company, aiSummary, dailyUpdates, tags
+        dateRange: { start: '2026-01-05', end: '2026-01-11' },
+        formattedOutput: 'Quiet week.',
+        // no companyId, dailyUpdates, tags
       };
 
       const result = await sendWeeklySummaryToGoogleChat(WEBHOOK, update, user);
@@ -232,19 +224,18 @@ describe('Google Chat Service', () => {
       expect(card.header.subtitle).toContain('No Company');
 
       const widgetText = card.sections[0].widgets.map((w) => w.textParagraph.text).join('\n');
-      expect(widgetText).not.toContain('AI Summary');
       expect(widgetText).not.toContain('Tags:');
       expect(widgetText).toContain('Updates Included: 0');
       // stats(1) + content(1) + from(1) = 3 widgets
       expect(card.sections[0].widgets).toHaveLength(3);
     });
 
-    it('should truncate weekly content longer than 500 chars', async () => {
+    it('truncates weekly content longer than 500 chars', async () => {
       global.fetch.mockResolvedValue({ ok: true });
 
       const update = {
-        period: { startDate: '2026-01-05', endDate: '2026-01-11' },
-        content: 'y'.repeat(700),
+        dateRange: { start: '2026-01-05', end: '2026-01-11' },
+        formattedOutput: 'y'.repeat(700),
       };
 
       await sendWeeklySummaryToGoogleChat(WEBHOOK, update, user);
@@ -256,12 +247,12 @@ describe('Google Chat Service', () => {
       expect(contentWidget.textParagraph.text).toContain('y'.repeat(500) + '...');
     });
 
-    it('should return false when fetch rejects', async () => {
+    it('returns false when fetch rejects', async () => {
       global.fetch.mockRejectedValue(new Error('boom'));
 
       const update = {
-        period: { startDate: '2026-01-05', endDate: '2026-01-11' },
-        content: 'hi',
+        dateRange: { start: '2026-01-05', end: '2026-01-11' },
+        formattedOutput: 'hi',
       };
       const result = await sendWeeklySummaryToGoogleChat(WEBHOOK, update, user);
 

@@ -141,6 +141,36 @@ describe('Weekly Updates API Integration Tests', () => {
       expect(response.body.data.formattedOutput).toBe('Test weekly output');
     });
 
+    it('links the daily updates covered by the date range', async () => {
+      // Use an October range that does not overlap the November dailies seeded
+      // in beforeEach, so this test isolates its own coverage set.
+      const d1 = await Update.create(
+        createDailyUpdateFixture(testUser._id, { date: new Date('2025-10-02') })
+      );
+      const d2 = await Update.create(
+        createDailyUpdateFixture(testUser._id, { date: new Date('2025-10-05') })
+      );
+      // A daily outside the range must NOT be linked.
+      await Update.create(
+        createDailyUpdateFixture(testUser._id, { date: new Date('2025-10-20') })
+      );
+
+      const response = await request(app)
+        .post('/api/weekly-updates')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          startDate: '2025-10-01',
+          endDate: '2025-10-07',
+          formattedOutput: 'Test weekly output'
+        })
+        .expect(201);
+
+      const linked = response.body.data.dailyUpdates.map(String);
+      expect(linked).toHaveLength(2);
+      expect(linked).toContain(d1._id.toString());
+      expect(linked).toContain(d2._id.toString());
+    });
+
     it('should reject without formattedOutput', async () => {
       const response = await request(app)
         .post('/api/weekly-updates')

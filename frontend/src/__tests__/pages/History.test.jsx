@@ -78,6 +78,51 @@ describe('History page', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the Chat button when Google Chat is linked and sends the update', async () => {
+    const user = userEvent.setup();
+    let postedId = null;
+    server.use(
+      http.get('http://localhost:5000/api/integrations/googlechat/status', () =>
+        HttpResponse.json({ success: true, data: { linked: true } })
+      ),
+      http.post(
+        'http://localhost:5000/api/integrations/googlechat/daily/a1',
+        () => {
+          postedId = 'a1';
+          return HttpResponse.json({
+            success: true,
+            message: 'Daily update sent to Google Chat',
+          });
+        }
+      )
+    );
+
+    render(<History />);
+    await screen.findByText('Alpha project update complete');
+
+    // One "Chat" button per update; click the first one.
+    const chatButtons = await screen.findAllByRole('button', { name: 'Chat' });
+    await user.click(chatButtons[0]);
+
+    await waitFor(() => expect(postedId).toBe('a1'));
+    expect(await screen.findByText('Sent to Google Chat')).toBeInTheDocument();
+  });
+
+  it('hides the Chat button when Google Chat is not linked', async () => {
+    server.use(
+      http.get('http://localhost:5000/api/integrations/googlechat/status', () =>
+        HttpResponse.json({ success: true, data: { linked: false } })
+      )
+    );
+
+    render(<History />);
+    await screen.findByText('Alpha project update complete');
+
+    expect(
+      screen.queryByRole('button', { name: 'Chat' })
+    ).not.toBeInTheDocument();
+  });
+
   it('filters the list via the search box', async () => {
     const user = userEvent.setup();
     render(<History />);

@@ -155,7 +155,7 @@ Once linked, you'll be able to receive updates directly here!
 
         const summaries = await WeeklyUpdate.find({
           userId: user._id,
-          'period.startDate': { $gte: startDate },
+          'dateRange.start': { $gte: startDate },
         })
           .populate('companyId')
           .sort({ createdAt: -1 })

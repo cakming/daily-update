@@ -1,13 +1,20 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, jest } from '@jest/globals';
 import request from 'supertest';
 import User from '../../../models/User.js';
+import Update from '../../../models/Update.js';
 import { generateToken } from '../../../middleware/auth.js';
 import { connectTestDB, closeTestDB, clearTestDB } from '../../setup/testDb.js';
-import { createUserFixture } from '../../setup/fixtures.js';
+import {
+  createUserFixture,
+  createDailyUpdateFixture,
+  createWeeklyUpdateFixture,
+} from '../../setup/fixtures.js';
 
 // Mock external integration services so no real network calls are made.
 const mockSendTelegramMessage = jest.fn().mockResolvedValue(true);
 const mockSendGoogleChatMessage = jest.fn().mockResolvedValue(true);
+const mockSendDailyGChat = jest.fn().mockResolvedValue(true);
+const mockSendWeeklyGChat = jest.fn().mockResolvedValue(true);
 
 jest.unstable_mockModule('../../../services/telegramBot.js', () => ({
   sendTelegramMessage: mockSendTelegramMessage,
@@ -19,8 +26,8 @@ jest.unstable_mockModule('../../../services/telegramBot.js', () => ({
 jest.unstable_mockModule('../../../services/googleChat.js', () => ({
   sendGoogleChatMessage: mockSendGoogleChatMessage,
   sendGoogleChatCard: jest.fn(),
-  sendDailyUpdateToGoogleChat: jest.fn(),
-  sendWeeklySummaryToGoogleChat: jest.fn(),
+  sendDailyUpdateToGoogleChat: mockSendDailyGChat,
+  sendWeeklySummaryToGoogleChat: mockSendWeeklyGChat,
   default: {},
 }));
 
@@ -208,6 +215,95 @@ describe('Integrations API Integration Tests', () => {
 
       const updated = await User.findById(testUser._id).select('+googleChatWebhook');
       expect(updated.googleChatWebhook).toBeFalsy();
+    });
+
+    describe('deliver updates to Google Chat', () => {
+      const linkWebhook = async () => {
+        const user = await User.findById(testUser._id).select('+googleChatWebhook');
+        user.googleChatWebhook = VALID_WEBHOOK;
+        await user.save({ validateBeforeSave: false });
+      };
+
+      it('sends a daily update when linked', async () => {
+        await linkWebhook();
+        const update = await Update.create(createDailyUpdateFixture(testUser._id));
+
+        const res = await request(app)
+          .post(`/api/integrations/googlechat/daily/${update._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(200);
+
+        expect(res.body.success).toBe(true);
+        expect(mockSendDailyGChat).toHaveBeenCalledTimes(1);
+      });
+
+      it('sends a weekly summary when linked', async () => {
+        await linkWebhook();
+        const update = await Update.create(createWeeklyUpdateFixture(testUser._id));
+
+        await request(app)
+          .post(`/api/integrations/googlechat/weekly/${update._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(200);
+
+        expect(mockSendWeeklyGChat).toHaveBeenCalledTimes(1);
+      });
+
+      it('rejects delivery when no webhook is linked', async () => {
+        const update = await Update.create(createDailyUpdateFixture(testUser._id));
+        await request(app)
+          .post(`/api/integrations/googlechat/daily/${update._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(400);
+        expect(mockSendDailyGChat).not.toHaveBeenCalled();
+      });
+
+      it('returns 404 for a non-existent update', async () => {
+        await linkWebhook();
+        await request(app)
+          .post('/api/integrations/googlechat/daily/507f1f77bcf86cd799439011')
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404);
+      });
+
+      it('returns 404 when the id is the wrong update type', async () => {
+        await linkWebhook();
+        const weekly = await Update.create(createWeeklyUpdateFixture(testUser._id));
+        await request(app)
+          .post(`/api/integrations/googlechat/daily/${weekly._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(404);
+      });
+
+      it("returns 403 for another user's update", async () => {
+        await linkWebhook();
+        const other = await User.create(
+          createUserFixture({ email: 'gc-other@example.com', password: 'password123' })
+        );
+        const update = await Update.create(createDailyUpdateFixture(other._id));
+
+        await request(app)
+          .post(`/api/integrations/googlechat/daily/${update._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(403);
+      });
+
+      it('returns 502 when the Google Chat send fails', async () => {
+        await linkWebhook();
+        mockSendDailyGChat.mockResolvedValueOnce(false);
+        const update = await Update.create(createDailyUpdateFixture(testUser._id));
+
+        await request(app)
+          .post(`/api/integrations/googlechat/daily/${update._id}`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .expect(502);
+      });
+
+      it('requires authentication', async () => {
+        await request(app)
+          .post('/api/integrations/googlechat/daily/507f1f77bcf86cd799439011')
+          .expect(401);
+      });
     });
   });
 });

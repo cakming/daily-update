@@ -55,8 +55,9 @@ export const sendGoogleChatCard = async (webhookUrl, card) => {
  * Send daily update to Google Chat
  */
 export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
-  const companyName = update.company?.name || 'No Company';
-  const date = new Date(update.createdAt).toLocaleDateString();
+  const companyName = update.companyId?.name || 'No Company';
+  const date = new Date(update.date || update.createdAt).toLocaleDateString();
+  const content = update.formattedOutput || '';
 
   const card = {
     header: {
@@ -66,19 +67,10 @@ export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
     sections: [
       {
         widgets: [
-          ...(update.aiSummary
-            ? [
-                {
-                  textParagraph: {
-                    text: `<b>📌 AI Summary:</b><br>${update.aiSummary}`,
-                  },
-                },
-              ]
-            : []),
           {
             textParagraph: {
-              text: `<b>Update Content:</b><br>${update.content.substring(0, 500)}${
-                update.content.length > 500 ? '...' : ''
+              text: `<b>Update Content:</b><br>${content.substring(0, 500)}${
+                content.length > 500 ? '...' : ''
               }`,
             },
           },
@@ -108,9 +100,10 @@ export const sendDailyUpdateToGoogleChat = async (webhookUrl, update, user) => {
  * Send weekly summary to Google Chat
  */
 export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user) => {
-  const companyName = update.company?.name || 'No Company';
-  const startDate = new Date(update.period.startDate).toLocaleDateString();
-  const endDate = new Date(update.period.endDate).toLocaleDateString();
+  const companyName = update.companyId?.name || 'No Company';
+  const startDate = new Date(update.dateRange?.start).toLocaleDateString();
+  const endDate = new Date(update.dateRange?.end).toLocaleDateString();
+  const content = update.formattedOutput || '';
 
   const card = {
     header: {
@@ -120,15 +113,6 @@ export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user) =>
     sections: [
       {
         widgets: [
-          ...(update.aiSummary
-            ? [
-                {
-                  textParagraph: {
-                    text: `<b>📌 AI Summary:</b><br>${update.aiSummary}`,
-                  },
-                },
-              ]
-            : []),
           {
             textParagraph: {
               text: `<b>📈 Statistics:</b><br>Updates Included: ${
@@ -138,8 +122,8 @@ export const sendWeeklySummaryToGoogleChat = async (webhookUrl, update, user) =>
           },
           {
             textParagraph: {
-              text: `<b>Weekly Summary:</b><br>${update.content.substring(0, 500)}${
-                update.content.length > 500 ? '...' : ''
+              text: `<b>Weekly Summary:</b><br>${content.substring(0, 500)}${
+                content.length > 500 ? '...' : ''
               }`,
             },
           },

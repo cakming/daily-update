@@ -32,7 +32,7 @@ import {
   Textarea,
   useToast,
 } from '@chakra-ui/react';
-import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI } from '../services/api';
+import { dailyUpdateAPI, weeklyUpdateAPI, companyAPI, integrationAPI } from '../services/api';
 import CompanySelector from '../components/CompanySelector';
 import TagFilter from '../components/TagFilter';
 import ExportButton from '../components/ExportButton';
@@ -68,8 +68,13 @@ const History = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [activeTab, setActiveTab] = useState(0); // 0 for daily, 1 for weekly
 
+  // Google Chat delivery state
+  const [googleChatLinked, setGoogleChatLinked] = useState(false);
+  const [sendingChatId, setSendingChatId] = useState(null);
+
   useEffect(() => {
     fetchCompanies();
+    fetchGoogleChatStatus();
   }, []);
 
   useEffect(() => {
@@ -241,6 +246,44 @@ const History = () => {
     fetchUpdates();
   };
 
+  const fetchGoogleChatStatus = async () => {
+    try {
+      const response = await integrationAPI.getGoogleChatStatus();
+      setGoogleChatLinked(!!response.data.data.linked);
+    } catch (error) {
+      // Non-fatal: leave the button hidden if we can't determine link status.
+      console.error('Error fetching Google Chat status:', error);
+    }
+  };
+
+  const handleSendToGoogleChat = async (update, type) => {
+    try {
+      setSendingChatId(update._id);
+      if (type === 'daily') {
+        await integrationAPI.sendGoogleChatDaily(update._id);
+      } else {
+        await integrationAPI.sendGoogleChatWeekly(update._id);
+      }
+      toast({
+        title: 'Sent to Google Chat',
+        description: `Your ${type === 'daily' ? 'daily update' : 'weekly summary'} was posted to Google Chat`,
+        status: 'success',
+        duration: 4000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to send to Google Chat',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSendingChatId(null);
+    }
+  };
+
   const handleEmail = (update, type) => {
     setEmailUpdate(update);
     setEmailUpdateType(type);
@@ -334,6 +377,17 @@ const History = () => {
             >
               Email
             </Button>
+            {googleChatLinked && (
+              <Button
+                onClick={() => handleSendToGoogleChat(update, type)}
+                colorScheme="green"
+                variant="outline"
+                size="sm"
+                isLoading={sendingChatId === update._id}
+              >
+                Chat
+              </Button>
+            )}
             <Button
               onClick={() => handleEdit(update, type)}
               colorScheme="teal"

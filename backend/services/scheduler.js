@@ -5,6 +5,7 @@ import DailyUpdate from '../models/Update.js';
 import WeeklyUpdate from '../models/Update.js';
 import User from '../models/User.js';
 import { getTransporter, emailTemplates } from '../config/email.js';
+import { processDailyUpdate, processWeeklyUpdate } from './claudeService.js';
 import { subDays } from 'date-fns';
 
 /**
@@ -58,12 +59,23 @@ const executeScheduledUpdate = async (scheduled) => {
     console.log(`Executing scheduled update ${scheduled._id} (${scheduled.type})`);
 
     if (scheduled.type === 'daily') {
-      // Create daily update
+      // Generate and create a daily update via the same AI pipeline the
+      // daily-update controller uses, matching the Update schema.
+      const date = new Date();
+      const { formattedOutput, sections } = await processDailyUpdate(
+        scheduled.content,
+        date
+      );
+
       const dailyUpdate = new DailyUpdate({
         userId: scheduled.userId,
+        type: 'daily',
+        date,
         companyId: scheduled.company?._id,
-        content: scheduled.content,
-        tags: scheduled.tags.map((tag) => tag._id),
+        tags: scheduled.tags?.map((tag) => tag._id) || [],
+        rawInput: scheduled.content,
+        formattedOutput,
+        sections,
       });
 
       createdUpdate = await dailyUpdate.save();
@@ -75,23 +87,39 @@ const executeScheduledUpdate = async (scheduled) => {
       const endDate = new Date();
       const startDate = subDays(endDate, 7);
 
-      // Get daily updates for the period
-      const dailyUpdates = await DailyUpdate.find({
+      // Gather the week's daily updates (need date + rawInput to summarize).
+      const dailyQuery = {
         userId: scheduled.userId,
-        companyId: scheduled.company?._id,
-        createdAt: { $gte: startDate, $lte: endDate },
-      }).select('_id');
+        type: 'daily',
+        date: { $gte: startDate, $lte: endDate },
+      };
+      if (scheduled.company?._id) {
+        dailyQuery.companyId = scheduled.company._id;
+      }
+      const weekDailies = await DailyUpdate.find(dailyQuery).sort({ date: 1 });
+
+      // Summarize the week's dailies, or fall back to the schedule's own
+      // content template when there are none.
+      const source =
+        weekDailies.length > 0
+          ? weekDailies
+          : [{ rawInput: scheduled.content, date: startDate }];
+      const { formattedOutput, sections } = await processWeeklyUpdate(
+        source,
+        startDate,
+        endDate
+      );
 
       const weeklyUpdate = new WeeklyUpdate({
         userId: scheduled.userId,
+        type: 'weekly',
+        dateRange: { start: startDate, end: endDate },
         companyId: scheduled.company?._id,
-        content: scheduled.content,
-        tags: scheduled.tags.map((tag) => tag._id),
-        period: {
-          startDate,
-          endDate,
-        },
-        dailyUpdates: dailyUpdates.map((du) => du._id),
+        tags: scheduled.tags?.map((tag) => tag._id) || [],
+        rawInput: scheduled.content,
+        formattedOutput,
+        sections,
+        dailyUpdates: weekDailies.map((du) => du._id),
       });
 
       createdUpdate = await weeklyUpdate.save();

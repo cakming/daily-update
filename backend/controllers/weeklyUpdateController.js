@@ -149,6 +149,22 @@ export const createWeeklyUpdate = async (req, res) => {
       updateData.tags = tags;
     }
 
+    // Link the daily updates this summary covers (drives the "updates included"
+    // count in emails/notifications).
+    const coverageQuery = {
+      userId: req.user._id,
+      type: 'daily',
+      date: { $gte: new Date(startDate), $lte: new Date(endDate) }
+    };
+    if (companyId) {
+      coverageQuery.companyId = companyId;
+    }
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      coverageQuery.tags = { $in: tags };
+    }
+    const coveredDailies = await Update.find(coverageQuery).select('_id');
+    updateData.dailyUpdates = coveredDailies.map((d) => d._id);
+
     const update = await Update.create(updateData);
 
     res.status(201).json({

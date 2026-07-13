@@ -66,6 +66,12 @@ const updateSchema = new mongoose.Schema({
     nextSteps: [String],
     issues: [String]
   },
+  // Daily updates a weekly summary was generated from. Only populated for
+  // `type: 'weekly'`; drives the "updates included" count in notifications.
+  dailyUpdates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Update'
+  }],
   createdAt: {
     type: Date,
     default: Date.now
