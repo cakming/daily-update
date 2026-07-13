@@ -1,20 +1,12 @@
 name: Docker Build
 
+# Disabled auto-triggering (manual dispatch only; workflow_call kept so ci.yml
+# can still reference it). GitHub Actions cannot start jobs on this account, so
+# push/pull_request runs only produced failing checks that blocked merges.
+# Re-enable by restoring the push/pull_request triggers once Actions is available.
 on:
-  push:
-    branches: [ main, master, develop ]
-    paths:
-      - 'backend/Dockerfile'
-      - 'frontend/Dockerfile'
-      - 'docker-compose.yml'
-      - '.github/workflows/docker-build.yml'
-  pull_request:
-    branches: [ main, master, develop ]
-    paths:
-      - 'backend/Dockerfile'
-      - 'frontend/Dockerfile'
-      - 'docker-compose.yml'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build:
