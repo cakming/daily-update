@@ -8,6 +8,8 @@ import {
   unlinkGoogleChat,
   getGoogleChatStatus,
   sendGoogleChatTest,
+  sendGoogleChatDaily,
+  sendGoogleChatWeekly,
 } from '../controllers/integrationController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -27,5 +29,7 @@ router.get('/googlechat/status', getGoogleChatStatus);
 router.post('/googlechat/link', linkGoogleChat);
 router.delete('/googlechat/unlink', unlinkGoogleChat);
 router.post('/googlechat/test', sendGoogleChatTest);
+router.post('/googlechat/daily/:id', sendGoogleChatDaily);
+router.post('/googlechat/weekly/:id', sendGoogleChatWeekly);
 
 export default router;

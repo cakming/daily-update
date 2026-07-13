@@ -1,6 +1,11 @@
 import User from '../models/User.js';
+import Update from '../models/Update.js';
 import { sendTelegramMessage } from '../services/telegramBot.js';
-import { sendGoogleChatMessage } from '../services/googleChat.js';
+import {
+  sendGoogleChatMessage,
+  sendDailyUpdateToGoogleChat,
+  sendWeeklySummaryToGoogleChat,
+} from '../services/googleChat.js';
 
 /**
  * Integration Controller
@@ -310,6 +315,114 @@ export const sendGoogleChatTest = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to send test message',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Load an update by id, verify it is the expected type and owned by the
+ * requester. On any failure this sends the response and returns null.
+ */
+const loadOwnedUpdate = async (req, res, expectedType) => {
+  const update = await Update.findById(req.params.id)
+    .populate('companyId')
+    .populate('tags');
+
+  if (!update || update.type !== expectedType) {
+    res.status(404).json({
+      success: false,
+      message: expectedType === 'daily' ? 'Daily update not found' : 'Weekly summary not found',
+    });
+    return null;
+  }
+
+  if (update.userId.toString() !== req.user._id.toString()) {
+    res.status(403).json({
+      success: false,
+      message: 'Not authorized to send this update',
+    });
+    return null;
+  }
+
+  return update;
+};
+
+/**
+ * @route   POST /api/integrations/googlechat/daily/:id
+ * @desc    Send a daily update to the user's Google Chat space
+ * @access  Private
+ */
+export const sendGoogleChatDaily = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+googleChatWebhook');
+    if (!user.googleChatWebhook) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google Chat webhook is not linked',
+      });
+    }
+
+    const update = await loadOwnedUpdate(req, res, 'daily');
+    if (!update) return;
+
+    const sent = await sendDailyUpdateToGoogleChat(user.googleChatWebhook, update, user);
+    if (!sent) {
+      return res.status(502).json({
+        success: false,
+        message: 'Failed to send update to Google Chat',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Daily update sent to Google Chat',
+    });
+  } catch (error) {
+    console.error('Send Google Chat daily error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send update to Google Chat',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @route   POST /api/integrations/googlechat/weekly/:id
+ * @desc    Send a weekly summary to the user's Google Chat space
+ * @access  Private
+ */
+export const sendGoogleChatWeekly = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+googleChatWebhook');
+    if (!user.googleChatWebhook) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google Chat webhook is not linked',
+      });
+    }
+
+    const update = await loadOwnedUpdate(req, res, 'weekly');
+    if (!update) return;
+
+    const sent = await sendWeeklySummaryToGoogleChat(user.googleChatWebhook, update, user);
+    if (!sent) {
+      return res.status(502).json({
+        success: false,
+        message: 'Failed to send summary to Google Chat',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Weekly summary sent to Google Chat',
+    });
+  } catch (error) {
+    console.error('Send Google Chat weekly error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send summary to Google Chat',
       error: error.message,
     });
   }
