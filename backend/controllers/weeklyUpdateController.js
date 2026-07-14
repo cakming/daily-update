@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import Update from '../models/Update.js';
-import { processWeeklyUpdate } from '../services/claudeService.js';
+import { processWeeklyUpdate, deriveSummary } from '../services/claudeService.js';
+import { formatUpdate } from '../services/updateFormatter.js';
 
 /**
  * @desc    Generate a weekly update from daily updates
@@ -47,18 +49,20 @@ export const generateWeeklyUpdate = async (req, res) => {
       });
     }
 
-    let formattedOutput, sections;
+    let formattedOutput, sections, aiSummary;
 
     if (rawInput) {
       // If raw input is provided, use it directly (useful for manual weekly summaries)
       const result = await processWeeklyUpdate([{ rawInput, date: startDate }], startDate, endDate);
       formattedOutput = result.formattedOutput;
       sections = result.sections;
+      aiSummary = result.aiSummary;
     } else {
       // Generate from daily updates
       const result = await processWeeklyUpdate(dailyUpdates, startDate, endDate);
       formattedOutput = result.formattedOutput;
       sections = result.sections;
+      aiSummary = result.aiSummary;
     }
 
     res.json({
@@ -66,6 +70,7 @@ export const generateWeeklyUpdate = async (req, res) => {
       data: {
         formattedOutput,
         sections,
+        aiSummary,
         dailyUpdatesUsed: dailyUpdates.length
       }
     });
@@ -136,6 +141,7 @@ export const createWeeklyUpdate = async (req, res) => {
       },
       rawInput: rawInput || 'Generated from daily updates',
       formattedOutput,
+      aiSummary: req.body.aiSummary || deriveSummary(formattedOutput, sections),
       sections
     };
 
@@ -381,5 +387,98 @@ export const deleteWeeklyUpdate = async (req, res) => {
       message: 'Failed to delete weekly update',
       error: error.message
     });
+  }
+};
+
+/**
+ * @route   POST /api/weekly-updates/:id/share
+ * @desc    Enable a public read-only share link for a weekly summary
+ * @access  Private
+ */
+export const enableShare = async (req, res) => {
+  try {
+    const update = await Update.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+      type: 'weekly'
+    });
+
+    if (!update) {
+      return res.status(404).json({ success: false, message: 'Weekly summary not found' });
+    }
+
+    if (!update.shareToken) {
+      update.shareToken = crypto.randomBytes(16).toString('hex');
+      await update.save();
+    }
+
+    res.json({ success: true, data: { shareToken: update.shareToken } });
+  } catch (error) {
+    console.error('Enable share error:', error);
+    res.status(500).json({ success: false, message: 'Failed to enable sharing', error: error.message });
+  }
+};
+
+/**
+ * @route   DELETE /api/weekly-updates/:id/share
+ * @desc    Disable the public share link for a weekly summary
+ * @access  Private
+ */
+export const disableShare = async (req, res) => {
+  try {
+    const update = await Update.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+      type: 'weekly'
+    });
+
+    if (!update) {
+      return res.status(404).json({ success: false, message: 'Weekly summary not found' });
+    }
+
+    update.shareToken = undefined;
+    await update.save();
+
+    res.json({ success: true, message: 'Sharing disabled' });
+  } catch (error) {
+    console.error('Disable share error:', error);
+    res.status(500).json({ success: false, message: 'Failed to disable sharing', error: error.message });
+  }
+};
+
+/**
+ * @route   GET /api/public/updates/:token
+ * @desc    Fetch a shared update by its public token (no auth). Returns only
+ *          presentation fields — never userId, rawInput, or the token itself.
+ * @access  Public
+ */
+export const getPublicUpdate = async (req, res) => {
+  try {
+    const update = await Update.findOne({ shareToken: req.params.token })
+      .populate('companyId', 'name')
+      .populate('tags', 'name');
+
+    if (!update) {
+      return res.status(404).json({ success: false, message: 'Shared update not found' });
+    }
+
+    const view = formatUpdate(update, { summaryMode: 'full' });
+
+    res.json({
+      success: true,
+      data: {
+        type: update.type,
+        title: view.title,
+        company: view.companyName,
+        date: view.date,
+        dateRange: view.dateRange,
+        formattedOutput: update.formattedOutput,
+        tags: view.tags,
+        createdAt: update.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Get public update error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load shared update', error: error.message });
   }
 };

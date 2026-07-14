@@ -31,6 +31,17 @@ jest.unstable_mockModule('../../../services/googleChat.js', () => ({
   default: {},
 }));
 
+const mockSendSlackMessage = jest.fn().mockResolvedValue(true);
+const mockSendDailySlack = jest.fn().mockResolvedValue(true);
+const mockSendWeeklySlack = jest.fn().mockResolvedValue(true);
+
+jest.unstable_mockModule('../../../services/slack.js', () => ({
+  sendSlackMessage: mockSendSlackMessage,
+  sendDailyUpdateToSlack: mockSendDailySlack,
+  sendWeeklySummaryToSlack: mockSendWeeklySlack,
+  default: {},
+}));
+
 const app = (await import('../../../app.js')).default;
 
 const VALID_WEBHOOK = 'https://chat.googleapis.com/v1/spaces/AAAA/messages?key=abc';
@@ -304,6 +315,68 @@ describe('Integrations API Integration Tests', () => {
           .post('/api/integrations/googlechat/daily/507f1f77bcf86cd799439011')
           .expect(401);
       });
+    });
+  });
+
+  describe('Slack', () => {
+    const SLACK_WEBHOOK = 'https://hooks.slack.com/services/T00/B00/xyz';
+    const linkSlack = async () => {
+      const user = await User.findById(testUser._id).select('+slackWebhook');
+      user.slackWebhook = SLACK_WEBHOOK;
+      await user.save({ validateBeforeSave: false });
+    };
+
+    it('reports not linked initially', async () => {
+      const res = await request(app)
+        .get('/api/integrations/slack/status')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      expect(res.body.data.linked).toBe(false);
+    });
+
+    it('links a valid webhook and rejects an invalid one', async () => {
+      await request(app)
+        .post('/api/integrations/slack/link')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ webhookUrl: SLACK_WEBHOOK })
+        .expect(200);
+      const updated = await User.findById(testUser._id).select('+slackWebhook');
+      expect(updated.slackWebhook).toBe(SLACK_WEBHOOK);
+
+      await request(app)
+        .post('/api/integrations/slack/link')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ webhookUrl: 'https://example.com/hook' })
+        .expect(400);
+    });
+
+    it('sends a test message when linked', async () => {
+      await linkSlack();
+      await request(app)
+        .post('/api/integrations/slack/test')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      expect(mockSendSlackMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it('sends a daily update, and 400s when not linked', async () => {
+      const update = await Update.create(createDailyUpdateFixture(testUser._id));
+
+      await request(app)
+        .post(`/api/integrations/slack/daily/${update._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(400);
+
+      await linkSlack();
+      await request(app)
+        .post(`/api/integrations/slack/daily/${update._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      expect(mockSendDailySlack).toHaveBeenCalledTimes(1);
+    });
+
+    it('requires authentication', async () => {
+      await request(app).get('/api/integrations/slack/status').expect(401);
     });
   });
 });

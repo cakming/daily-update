@@ -7,7 +7,8 @@ import Update from '../../../models/Update.js';
 // Mock the Claude service
 const mockProcessWeeklyUpdate = jest.fn();
 jest.unstable_mockModule('../../../services/claudeService.js', () => ({
-  processWeeklyUpdate: mockProcessWeeklyUpdate
+  processWeeklyUpdate: mockProcessWeeklyUpdate,
+  deriveSummary: jest.fn(() => 'derived summary')
 }));
 
 // Dynamic import after mocking

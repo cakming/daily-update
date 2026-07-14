@@ -54,7 +54,8 @@ export const swaggerOptions = {
       { name: 'Schedules', description: 'Scheduled updates' },
       { name: 'Notifications', description: 'Notifications and preferences' },
       { name: 'Teams', description: 'Team collaboration' },
-      { name: 'Integrations', description: 'Third-party integrations' },
+      { name: 'Integrations', description: 'Third-party integrations (Telegram, Google Chat, Slack)' },
+      { name: 'Public', description: 'Unauthenticated read-only shared content' },
     ],
   },
   // Glob the route and controller files so @openapi JSDoc annotations are picked up.

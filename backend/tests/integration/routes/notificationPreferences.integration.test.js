@@ -81,6 +81,22 @@ describe('Notification Preferences API Integration Tests', () => {
       expect(res.body.data.botNotifications.telegram).toBe(false);
     });
 
+    it('defaults summaryMode to "full" and lets the user switch to "summary"', async () => {
+      const created = await request(app)
+        .put('/api/notification-preferences')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ botNotifications: { telegram: true } })
+        .expect(200);
+      expect(created.body.data.summaryMode).toBe('full');
+
+      const updated = await request(app)
+        .put('/api/notification-preferences')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ summaryMode: 'summary' })
+        .expect(200);
+      expect(updated.body.data.summaryMode).toBe('summary');
+    });
+
     it('should require authentication', async () => {
       await request(app).put('/api/notification-preferences').send({}).expect(401);
     });

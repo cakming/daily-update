@@ -2,6 +2,7 @@ import { getTransporter, emailTemplates, verifyEmailConfig } from '../config/ema
 import DailyUpdate from '../models/Update.js';
 import WeeklyUpdate from '../models/Update.js';
 import User from '../models/User.js';
+import { getSummaryMode } from '../services/updateFormatter.js';
 
 /**
  * Email Controller
@@ -68,7 +69,8 @@ export const sendDailyUpdate = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     // Generate email content
-    const emailContent = emailTemplates.dailyUpdate(update, user);
+    const summaryMode = await getSummaryMode(req.user._id);
+    const emailContent = emailTemplates.dailyUpdate(update, user, { summaryMode });
 
     // Send email to all recipients
     const sendPromises = recipients.map((recipient) =>
@@ -161,7 +163,8 @@ export const sendWeeklySummary = async (req, res) => {
     const user = await User.findById(req.user._id);
 
     // Generate email content
-    const emailContent = emailTemplates.weeklySummary(update, user);
+    const summaryMode = await getSummaryMode(req.user._id);
+    const emailContent = emailTemplates.weeklySummary(update, user, { summaryMode });
 
     // Send email to all recipients
     const sendPromises = recipients.map((recipient) =>

@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import DailyUpdate from '../models/Update.js';
 import WeeklyUpdate from '../models/Update.js';
 import { subDays } from 'date-fns';
+import { formatUpdate, truncate, getSummaryMode } from './updateFormatter.js';
 
 /**
  * Telegram Bot Service
@@ -118,13 +119,14 @@ Once linked, you'll be able to receive updates directly here!
           return;
         }
 
+        const summaryMode = await getSummaryMode(user._id);
         let message = `📅 Today's Updates (${updates.length}):\n\n`;
 
         updates.forEach((update, index) => {
-          const companyName = update.companyId?.name || 'No Company';
-          message += `${index + 1}. ${companyName}\n`;
-          if (update.aiSummary) {
-            message += `📌 ${update.aiSummary}\n`;
+          const view = formatUpdate(update, { summaryMode });
+          message += `${index + 1}. ${view.companyLabel}\n`;
+          if (view.body) {
+            message += `📌 ${truncate(view.body, 200)}\n`;
           }
           message += `\n`;
         });
@@ -166,14 +168,14 @@ Once linked, you'll be able to receive updates directly here!
           return;
         }
 
-        const summary = summaries[0];
-        const companyName = summary.companyId?.name || 'All Companies';
+        const summaryMode = await getSummaryMode(user._id);
+        const view = formatUpdate(summaries[0], { summaryMode });
 
-        let message = `📊 Weekly Summary - ${companyName}\n\n`;
-        if (summary.aiSummary) {
-          message += `📌 ${summary.aiSummary}\n\n`;
+        let message = `📊 Weekly Summary - ${view.companyLabel}\n\n`;
+        if (view.body) {
+          message += `📌 ${truncate(view.body, 400)}\n\n`;
         }
-        message += `Updates: ${summary.dailyUpdates?.length || 0}\n`;
+        message += `Updates: ${view.dailyUpdatesCount}\n`;
 
         await ctx.reply(message);
       } catch (error) {
@@ -242,21 +244,14 @@ Keep up the great work! 🎉
           return;
         }
 
-        const companyName = latestUpdate.companyId?.name || 'No Company';
-        const date = new Date(latestUpdate.createdAt).toLocaleDateString();
+        const summaryMode = await getSummaryMode(user._id);
+        const view = formatUpdate(latestUpdate, { summaryMode });
+        const date = new Date(view.date).toLocaleDateString();
 
         let message = `📝 Latest Update\n\n`;
-        message += `🏢 Company: ${companyName}\n`;
+        message += `🏢 Company: ${view.companyLabel}\n`;
         message += `📅 Date: ${date}\n\n`;
-
-        if (latestUpdate.aiSummary) {
-          message += `📌 Summary:\n${latestUpdate.aiSummary}\n\n`;
-        }
-
-        message += `Content:\n${latestUpdate.content.substring(0, 500)}`;
-        if (latestUpdate.content.length > 500) {
-          message += '...';
-        }
+        message += `Content:\n${truncate(view.body)}`;
 
         await ctx.reply(message);
       } catch (error) {

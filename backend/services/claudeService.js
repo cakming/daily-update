@@ -52,7 +52,9 @@ IMPORTANT FORMATTING REQUIREMENTS:
 Technical Update to Transform:
 ${technicalText}
 
-Return ONLY the formatted update text, nothing else.`;
+Return the formatted update text. Then, on a final separate line, write the
+marker @@SUMMARY@@ followed by a single plain-text sentence (max 25 words)
+summarizing the update for a one-line preview.`;
 
     const message = await anthropic.messages.create({
       model: CLAUDE_MODEL,
@@ -64,14 +66,18 @@ Return ONLY the formatted update text, nothing else.`;
       }]
     });
 
-    const formattedOutput = message.content[0].text.trim();
+    // Split the model's one-line summary off the formatted body.
+    const { formattedOutput, aiSummary: modelSummary } = splitSummary(
+      message.content[0].text
+    );
 
     // Parse sections from the formatted output
     const sections = parseSections(formattedOutput);
 
     return {
       formattedOutput,
-      sections
+      sections,
+      aiSummary: modelSummary || deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
@@ -133,7 +139,9 @@ IMPORTANT FORMATTING REQUIREMENTS:
 Daily Updates from this week:
 ${combinedUpdates}
 
-Return ONLY the formatted weekly update text, nothing else.`;
+Return the formatted weekly update text. Then, on a final separate line, write
+the marker @@SUMMARY@@ followed by a single plain-text sentence (max 25 words)
+summarizing the week for a one-line preview.`;
 
     const message = await anthropic.messages.create({
       model: CLAUDE_MODEL,
@@ -145,19 +153,68 @@ Return ONLY the formatted weekly update text, nothing else.`;
       }]
     });
 
-    const formattedOutput = message.content[0].text.trim();
+    // Split the model's one-line summary off the formatted body.
+    const { formattedOutput, aiSummary: modelSummary } = splitSummary(
+      message.content[0].text
+    );
 
     // Parse sections from the formatted output (adapt field names for weekly)
     const sections = parseWeeklySections(formattedOutput);
 
     return {
       formattedOutput,
-      sections
+      sections,
+      aiSummary: modelSummary || deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
     throw new Error(`Failed to generate weekly update with Claude API: ${error.message}`);
   }
+};
+
+/**
+ * Split a model response into the formatted body and the one-line summary the
+ * prompt asks for after an @@SUMMARY@@ marker. If the marker is absent (older
+ * prompts, model variance) the whole response is the body and the summary is
+ * empty, letting callers fall back to deriveSummary().
+ */
+export const splitSummary = (raw = '') => {
+  const parts = String(raw).split(/@@SUMMARY@@/i);
+  const formattedOutput = parts[0].trim();
+  const aiSummary = (parts[1] || '').trim().replace(/^[:\-\s]+/, '');
+  return { formattedOutput, aiSummary };
+};
+
+/**
+ * Derive a short, one-glance summary from an AI-formatted update. Prefers the
+ * first highlights of the progress/achievements section, falling back to the
+ * first bullet lines of the formatted output. No extra API call — this is a
+ * concise view of content the model already produced. Used for the "summary"
+ * notification mode (vs the full formatted output).
+ */
+export const deriveSummary = (formattedOutput = '', sections = {}) => {
+  const highlights =
+    (sections?.todaysProgress?.length && sections.todaysProgress) ||
+    (sections?.ongoingWork?.length && sections.ongoingWork) ||
+    [];
+
+  if (highlights.length > 0) {
+    return highlights.slice(0, 2).join(' ').trim().slice(0, 280);
+  }
+
+  const bullets = formattedOutput
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('-'))
+    .map((line) => line.replace(/^-\s*/, ''));
+
+  if (bullets.length > 0) {
+    return bullets.slice(0, 2).join(' ').slice(0, 280);
+  }
+
+  // Last resort: first non-empty line after the header.
+  const lines = formattedOutput.split('\n').map((l) => l.trim()).filter(Boolean);
+  return (lines[1] || lines[0] || '').slice(0, 280);
 };
 
 /**

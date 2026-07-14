@@ -119,6 +119,34 @@ describe('Integrations page', () => {
     await waitFor(() => expect(posted).toEqual({ webhookUrl: webhook }));
   });
 
+  it('links a Slack webhook from its tab', async () => {
+    let posted = null;
+    server.use(
+      http.post(`${API}/integrations/slack/link`, async ({ request }) => {
+        posted = await request.json();
+        return HttpResponse.json({ success: true, data: {} });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<Integrations />);
+
+    await user.click(await screen.findByRole('tab', { name: /Slack/ }));
+
+    const webhook = 'https://hooks.slack.com/services/T00/B00/xyz';
+    await user.type(
+      await screen.findByPlaceholderText('https://hooks.slack.com/services/...'),
+      webhook
+    );
+    const connects = screen.getAllByRole('button', { name: 'Connect' });
+    await user.click(connects[connects.length - 1]);
+
+    expect(
+      await screen.findByText('Slack linked successfully')
+    ).toBeInTheDocument();
+    await waitFor(() => expect(posted).toEqual({ webhookUrl: webhook }));
+  });
+
   it('shows an error toast when Google Chat linking fails', async () => {
     server.use(
       http.post(`${API}/integrations/googlechat/link`, () =>

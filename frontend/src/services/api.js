@@ -77,6 +77,12 @@ export const weeklyUpdateAPI = {
   getById: (id) => api.get(`/weekly-updates/${id}`),
   update: (id, data) => api.put(`/weekly-updates/${id}`, data),
   delete: (id) => api.delete(`/weekly-updates/${id}`),
+  enableShare: (id) => api.post(`/weekly-updates/${id}/share`),
+  disableShare: (id) => api.delete(`/weekly-updates/${id}/share`),
+};
+
+export const publicAPI = {
+  getSharedUpdate: (token) => api.get(`/public/updates/${token}`),
 };
 
 // Company APIs
@@ -168,9 +174,25 @@ export const emailAPI = {
 };
 
 export const integrationAPI = {
+  // Telegram
+  getTelegramStatus: () => api.get('/integrations/telegram/status'),
+  linkTelegram: (telegramId) => api.post('/integrations/telegram/link', { telegramId }),
+  unlinkTelegram: () => api.delete('/integrations/telegram/unlink'),
+  testTelegram: () => api.post('/integrations/telegram/test'),
+  // Google Chat
   getGoogleChatStatus: () => api.get('/integrations/googlechat/status'),
+  linkGoogleChat: (webhookUrl) => api.post('/integrations/googlechat/link', { webhookUrl }),
+  unlinkGoogleChat: () => api.delete('/integrations/googlechat/unlink'),
+  testGoogleChat: () => api.post('/integrations/googlechat/test'),
   sendGoogleChatDaily: (id) => api.post(`/integrations/googlechat/daily/${id}`),
   sendGoogleChatWeekly: (id) => api.post(`/integrations/googlechat/weekly/${id}`),
+  // Slack
+  getSlackStatus: () => api.get('/integrations/slack/status'),
+  linkSlack: (webhookUrl) => api.post('/integrations/slack/link', { webhookUrl }),
+  unlinkSlack: () => api.delete('/integrations/slack/unlink'),
+  testSlack: () => api.post('/integrations/slack/test'),
+  sendSlackDaily: (id) => api.post(`/integrations/slack/daily/${id}`),
+  sendSlackWeekly: (id) => api.post(`/integrations/slack/weekly/${id}`),
 };
 
 export const scheduleAPI = {

@@ -60,6 +60,12 @@ const updateSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  // Short, one-glance summary derived from the AI output. Shown in notifications
+  // when the user's summaryMode is 'summary' (vs the full formattedOutput).
+  aiSummary: {
+    type: String,
+    default: ''
+  },
   sections: {
     todaysProgress: [String],
     ongoingWork: [String],
@@ -72,6 +78,13 @@ const updateSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Update'
   }],
+  // When set, this update is viewable (read-only) at a public share URL keyed
+  // by the token. Absent = not shared.
+  shareToken: {
+    type: String,
+    index: true,
+    sparse: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

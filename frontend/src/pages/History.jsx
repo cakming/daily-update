@@ -68,13 +68,16 @@ const History = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [activeTab, setActiveTab] = useState(0); // 0 for daily, 1 for weekly
 
-  // Google Chat delivery state
+  // Bot delivery state (Google Chat + Slack)
   const [googleChatLinked, setGoogleChatLinked] = useState(false);
+  const [slackLinked, setSlackLinked] = useState(false);
   const [sendingChatId, setSendingChatId] = useState(null);
+  const [sendingSlackId, setSendingSlackId] = useState(null);
 
   useEffect(() => {
     fetchCompanies();
     fetchGoogleChatStatus();
+    fetchSlackStatus();
   }, []);
 
   useEffect(() => {
@@ -284,6 +287,71 @@ const History = () => {
     }
   };
 
+  const fetchSlackStatus = async () => {
+    try {
+      const response = await integrationAPI.getSlackStatus();
+      setSlackLinked(!!response.data.data.linked);
+    } catch (error) {
+      console.error('Error fetching Slack status:', error);
+    }
+  };
+
+  const handleSendToSlack = async (update, type) => {
+    try {
+      setSendingSlackId(update._id);
+      if (type === 'daily') {
+        await integrationAPI.sendSlackDaily(update._id);
+      } else {
+        await integrationAPI.sendSlackWeekly(update._id);
+      }
+      toast({
+        title: 'Sent to Slack',
+        description: `Your ${type === 'daily' ? 'daily update' : 'weekly summary'} was posted to Slack`,
+        status: 'success',
+        duration: 4000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to send to Slack',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSendingSlackId(null);
+    }
+  };
+
+  const handleShare = async (update) => {
+    try {
+      const response = await weeklyUpdateAPI.enableShare(update._id);
+      const token = response.data.data.shareToken;
+      const url = `${window.location.origin}/share/${token}`;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // Clipboard may be unavailable; the URL is still shown in the toast.
+      }
+      toast({
+        title: 'Share link copied',
+        description: url,
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to create share link',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleEmail = (update, type) => {
     setEmailUpdate(update);
     setEmailUpdateType(type);
@@ -386,6 +454,27 @@ const History = () => {
                 isLoading={sendingChatId === update._id}
               >
                 Chat
+              </Button>
+            )}
+            {slackLinked && (
+              <Button
+                onClick={() => handleSendToSlack(update, type)}
+                colorScheme="purple"
+                variant="outline"
+                size="sm"
+                isLoading={sendingSlackId === update._id}
+              >
+                Slack
+              </Button>
+            )}
+            {type === 'weekly' && (
+              <Button
+                onClick={() => handleShare(update)}
+                colorScheme="orange"
+                variant="outline"
+                size="sm"
+              >
+                Share
               </Button>
             )}
             <Button

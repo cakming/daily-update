@@ -6,7 +6,9 @@ import {
   getWeeklyUpdates,
   getWeeklyUpdateById,
   updateWeeklyUpdate,
-  deleteWeeklyUpdate
+  deleteWeeklyUpdate,
+  enableShare,
+  disableShare
 } from '../controllers/weeklyUpdateController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -179,5 +181,36 @@ router.get('/', getWeeklyUpdates);
 router.get('/:id', getWeeklyUpdateById);
 router.put('/:id', updateWeeklyUpdate);
 router.delete('/:id', deleteWeeklyUpdate);
+
+/**
+ * @openapi
+ * /weekly-updates/{id}/share:
+ *   post:
+ *     summary: Enable a public read-only share link for a weekly summary
+ *     tags: [Weekly Updates]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: 'Returns { shareToken }; view at /api/public/updates/{token}' }
+ *       404: { description: Weekly summary not found }
+ *   delete:
+ *     summary: Disable the public share link
+ *     tags: [Weekly Updates]
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: Sharing disabled }
+ *       404: { description: Weekly summary not found }
+ */
+router.post('/:id/share', enableShare);
+router.delete('/:id/share', disableShare);
 
 export default router;

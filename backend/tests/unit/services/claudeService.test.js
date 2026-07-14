@@ -11,7 +11,7 @@ jest.unstable_mockModule('@anthropic-ai/sdk', () => ({
 }));
 
 // Dynamic import after mocking
-const { processDailyUpdate, processWeeklyUpdate } = await import('../../../services/claudeService.js');
+const { processDailyUpdate, processWeeklyUpdate, deriveSummary, splitSummary } = await import('../../../services/claudeService.js');
 
 describe('Claude Service', () => {
   beforeEach(() => {
@@ -20,6 +20,53 @@ describe('Claude Service', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('deriveSummary', () => {
+    it('prefers the first progress highlights', () => {
+      const summary = deriveSummary('ignored', {
+        todaysProgress: ['Shipped login', 'Fixed billing bug', 'Third item'],
+        ongoingWork: ['Working on X'],
+      });
+      expect(summary).toContain('Shipped login');
+      expect(summary).toContain('Fixed billing bug');
+      expect(summary).not.toContain('Third item'); // only the first two
+    });
+
+    it('falls back to ongoingWork, then to formatted bullets', () => {
+      expect(
+        deriveSummary('x', { todaysProgress: [], ongoingWork: ['Ongoing thing'] })
+      ).toContain('Ongoing thing');
+
+      const fromBullets = deriveSummary(
+        '🗓️ Daily Update\n\n✅ Progress\n- Bullet one\n- Bullet two',
+        {}
+      );
+      expect(fromBullets).toContain('Bullet one');
+    });
+
+    it('caps the length and tolerates empty input', () => {
+      const long = deriveSummary('x', { todaysProgress: ['y'.repeat(500)] });
+      expect(long.length).toBeLessThanOrEqual(280);
+      expect(deriveSummary('', {})).toBe('');
+    });
+  });
+
+  describe('splitSummary', () => {
+    it('splits the body from the @@SUMMARY@@ line and strips the marker', () => {
+      const { formattedOutput, aiSummary } = splitSummary(
+        '🗓️ Daily Update\n\n✅ Progress\n- Did the thing\n@@SUMMARY@@ Shipped the login flow today.'
+      );
+      expect(formattedOutput).toContain('Did the thing');
+      expect(formattedOutput).not.toContain('@@SUMMARY@@');
+      expect(aiSummary).toBe('Shipped the login flow today.');
+    });
+
+    it('returns an empty summary when the marker is absent', () => {
+      const { formattedOutput, aiSummary } = splitSummary('Just the body, no marker.');
+      expect(formattedOutput).toBe('Just the body, no marker.');
+      expect(aiSummary).toBe('');
+    });
   });
 
   describe('processDailyUpdate', () => {
@@ -56,6 +103,25 @@ No major issues reported`
       expect(result.formattedOutput).toContain('🗓️ Daily Update');
       expect(result.formattedOutput).toContain('November 6, 2025');
       expect(mockCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it('extracts the AI one-line summary and keeps it out of the body', async () => {
+      mockCreate.mockResolvedValue({
+        content: [{
+          text: `🗓️ Daily Update — Wednesday, November 6, 2025
+
+✅ Today's Progress
+- Fixed authentication bug
+
+@@SUMMARY@@ Resolved the login authentication issue.`
+        }]
+      });
+
+      const result = await processDailyUpdate('Fixed auth bug', new Date('2025-11-06'));
+
+      expect(result.aiSummary).toBe('Resolved the login authentication issue.');
+      expect(result.formattedOutput).not.toContain('@@SUMMARY@@');
+      expect(result.formattedOutput).not.toContain('Resolved the login authentication');
     });
 
     it('should parse sections correctly from formatted output', async () => {

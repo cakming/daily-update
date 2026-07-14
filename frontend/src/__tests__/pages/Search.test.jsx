@@ -54,7 +54,9 @@ describe('Search page', () => {
           data: [
             {
               _id: 'd1',
-              content: 'Fixed the login bug',
+              type: 'daily',
+              formattedOutput: 'Fixed the login bug',
+              companyId: { _id: 'c1', name: 'Acme' },
               createdAt: new Date().toISOString(),
             },
           ],

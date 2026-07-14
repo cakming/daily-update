@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { formatUpdate } from '../services/updateFormatter.js';
 
 /**
  * Email Configuration
@@ -63,9 +64,10 @@ export const emailTemplates = {
   /**
    * Daily update email template
    */
-  dailyUpdate: (update, user) => {
-    const companyName = update.companyId?.name || 'No Company';
-    const date = new Date(update.createdAt).toLocaleDateString('en-US', {
+  dailyUpdate: (update, user, options = {}) => {
+    const view = formatUpdate(update, options);
+    const companyName = view.companyLabel;
+    const date = new Date(view.date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -164,22 +166,15 @@ export const emailTemplates = {
               </div>
             </div>
 
-            ${update.aiSummary ? `
-            <div class="summary">
-              <h3>🤖 AI Summary</h3>
-              <p>${update.aiSummary}</p>
-            </div>
-            ` : ''}
-
             <div class="content">
               <h3>Update Content:</h3>
-              <p>${update.content}</p>
+              <p>${view.body}</p>
             </div>
 
-            ${update.tags && update.tags.length > 0 ? `
+            ${view.tags.length > 0 ? `
             <div class="tags">
               <strong>Tags:</strong><br>
-              ${update.tags.map(tag => `<span class="tag">${tag.name}</span>`).join('')}
+              ${view.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
             </div>
             ` : ''}
 
@@ -198,12 +193,10 @@ Company: ${companyName}
 Date: ${date}
 From: ${user.name} (${user.email})
 
-${update.aiSummary ? `AI Summary:\n${update.aiSummary}\n\n` : ''}
-
 Update Content:
-${update.content}
+${view.body}
 
-${update.tags && update.tags.length > 0 ? `\nTags: ${update.tags.map(tag => tag.name).join(', ')}` : ''}
+${view.tags.length > 0 ? `\nTags: ${view.tags.join(', ')}` : ''}
 
 ---
 This email was sent from Daily Update App
@@ -215,10 +208,11 @@ This email was sent from Daily Update App
   /**
    * Weekly summary email template
    */
-  weeklySummary: (update, user) => {
-    const companyName = update.companyId?.name || 'No Company';
-    const startDate = new Date(update.dateRange?.start).toLocaleDateString();
-    const endDate = new Date(update.dateRange?.end).toLocaleDateString();
+  weeklySummary: (update, user, options = {}) => {
+    const view = formatUpdate(update, options);
+    const companyName = view.companyLabel;
+    const startDate = new Date(view.dateRange?.start).toLocaleDateString();
+    const endDate = new Date(view.dateRange?.end).toLocaleDateString();
 
     return {
       subject: `Weekly Summary - ${companyName} - ${startDate} to ${endDate}`,
@@ -321,27 +315,20 @@ This email was sent from Daily Update App
               </div>
             </div>
 
-            ${update.aiSummary ? `
-            <div class="summary">
-              <h3>🤖 AI Summary</h3>
-              <p>${update.aiSummary}</p>
-            </div>
-            ` : ''}
-
             <div class="stats">
               <strong>📈 Statistics</strong><br>
-              Updates Included: ${update.dailyUpdates?.length || 0}
+              Updates Included: ${view.dailyUpdatesCount}
             </div>
 
             <div class="content">
               <h3>Weekly Summary:</h3>
-              <p>${update.content}</p>
+              <p>${view.body}</p>
             </div>
 
-            ${update.tags && update.tags.length > 0 ? `
+            ${view.tags.length > 0 ? `
             <div class="tags">
               <strong>Tags:</strong><br>
-              ${update.tags.map(tag => `<span class="tag">${tag.name}</span>`).join('')}
+              ${view.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
             </div>
             ` : ''}
 
@@ -360,15 +347,13 @@ Company: ${companyName}
 Period: ${startDate} - ${endDate}
 From: ${user.name} (${user.email})
 
-${update.aiSummary ? `AI Summary:\n${update.aiSummary}\n\n` : ''}
-
 Statistics:
-Updates Included: ${update.dailyUpdates?.length || 0}
+Updates Included: ${view.dailyUpdatesCount}
 
 Weekly Summary:
-${update.content}
+${view.body}
 
-${update.tags && update.tags.length > 0 ? `\nTags: ${update.tags.map(tag => tag.name).join(', ')}` : ''}
+${view.tags.length > 0 ? `\nTags: ${view.tags.join(', ')}` : ''}
 
 ---
 This email was sent from Daily Update App

@@ -18,6 +18,7 @@ import scheduleHistoryRoutes from './routes/scheduleHistory.js';
 import integrationRoutes from './routes/integrations.js';
 import notificationPreferenceRoutes from './routes/notificationPreferences.js';
 import teamRoutes from './routes/teams.js';
+import publicRoutes from './routes/public.js';
 import { apiLimiter, authLimiter, aiLimiter, exportLimiter } from './middleware/rateLimiter.js';
 import {
   initSentry,
@@ -71,6 +72,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/schedule-history', scheduleHistoryRoutes);
 app.use('/api/integrations', integrationRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/public', publicRoutes); // unauthenticated read-only shares
 
 // API documentation (Swagger UI + raw spec)
 // Mounted outside the `/api/` rate limiter and before the 404 handler.

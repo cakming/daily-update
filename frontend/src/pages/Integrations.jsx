@@ -25,9 +25,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { integrationAPI } from '../services/api';
 
 /**
  * Integrations Page
@@ -49,6 +47,12 @@ const Integrations = () => {
   const [googleChatWebhookInput, setGoogleChatWebhookInput] = useState('');
   const [googleChatLoading, setGoogleChatLoading] = useState(false);
 
+  // Slack state
+  const [slackLinked, setSlackLinked] = useState(false);
+  const [slackWebhook, setSlackWebhook] = useState('');
+  const [slackWebhookInput, setSlackWebhookInput] = useState('');
+  const [slackLoading, setSlackLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,12 +62,11 @@ const Integrations = () => {
   const fetchIntegrationStatus = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      const [telegramRes, googleChatRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/integrations/telegram/status`, config),
-        axios.get(`${API_BASE_URL}/integrations/googlechat/status`, config),
+      const [telegramRes, googleChatRes, slackRes] = await Promise.all([
+        integrationAPI.getTelegramStatus(),
+        integrationAPI.getGoogleChatStatus(),
+        integrationAPI.getSlackStatus(),
       ]);
 
       setTelegramLinked(telegramRes.data.data.linked);
@@ -71,6 +74,9 @@ const Integrations = () => {
 
       setGoogleChatLinked(googleChatRes.data.data.linked);
       setGoogleChatWebhook(googleChatRes.data.data.webhookUrl || '');
+
+      setSlackLinked(slackRes.data.data.linked);
+      setSlackWebhook(slackRes.data.data.webhookUrl || '');
     } catch (error) {
       toast({
         title: 'Failed to load integration status',
@@ -99,14 +105,7 @@ const Integrations = () => {
 
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(
-        `${API_BASE_URL}/integrations/telegram/link`,
-        { telegramId: telegramIdInput },
-        config
-      );
+      await integrationAPI.linkTelegram(telegramIdInput);
 
       toast({
         title: 'Telegram linked successfully',
@@ -136,10 +135,7 @@ const Integrations = () => {
 
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.delete(`${API_BASE_URL}/integrations/telegram/unlink`, config);
+      await integrationAPI.unlinkTelegram();
 
       toast({
         title: 'Telegram unlinked',
@@ -165,10 +161,7 @@ const Integrations = () => {
   const handleTestTelegram = async () => {
     try {
       setTelegramLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(`${API_BASE_URL}/integrations/telegram/test`, {}, config);
+      await integrationAPI.testTelegram();
 
       toast({
         title: 'Test message sent',
@@ -205,14 +198,7 @@ const Integrations = () => {
 
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(
-        `${API_BASE_URL}/integrations/googlechat/link`,
-        { webhookUrl: googleChatWebhookInput },
-        config
-      );
+      await integrationAPI.linkGoogleChat(googleChatWebhookInput);
 
       toast({
         title: 'Google Chat linked successfully',
@@ -241,10 +227,7 @@ const Integrations = () => {
 
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.delete(`${API_BASE_URL}/integrations/googlechat/unlink`, config);
+      await integrationAPI.unlinkGoogleChat();
 
       toast({
         title: 'Google Chat unlinked',
@@ -270,10 +253,7 @@ const Integrations = () => {
   const handleTestGoogleChat = async () => {
     try {
       setGoogleChatLoading(true);
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      await axios.post(`${API_BASE_URL}/integrations/googlechat/test`, {}, config);
+      await integrationAPI.testGoogleChat();
 
       toast({
         title: 'Test message sent',
@@ -292,6 +272,84 @@ const Integrations = () => {
       });
     } finally {
       setGoogleChatLoading(false);
+    }
+  };
+
+  // Slack functions
+  const handleLinkSlack = async () => {
+    if (!slackWebhookInput.trim()) {
+      toast({
+        title: 'Webhook URL required',
+        description: 'Please enter your Slack incoming webhook URL',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setSlackLoading(true);
+      await integrationAPI.linkSlack(slackWebhookInput);
+
+      toast({ title: 'Slack linked successfully', status: 'success', duration: 5000, isClosable: true });
+      setSlackWebhookInput('');
+      await fetchIntegrationStatus();
+    } catch (error) {
+      toast({
+        title: 'Failed to link Slack',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSlackLoading(false);
+    }
+  };
+
+  const handleUnlinkSlack = async () => {
+    if (!window.confirm('Are you sure you want to unlink your Slack webhook?')) return;
+
+    try {
+      setSlackLoading(true);
+      await integrationAPI.unlinkSlack();
+      toast({ title: 'Slack unlinked', status: 'success', duration: 3000, isClosable: true });
+      await fetchIntegrationStatus();
+    } catch (error) {
+      toast({
+        title: 'Failed to unlink Slack',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSlackLoading(false);
+    }
+  };
+
+  const handleTestSlack = async () => {
+    try {
+      setSlackLoading(true);
+      await integrationAPI.testSlack();
+      toast({
+        title: 'Test message sent',
+        description: 'Check your Slack channel for the test message',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to send test message',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setSlackLoading(false);
     }
   };
 
@@ -337,6 +395,7 @@ const Integrations = () => {
             <TabList>
               <Tab>🤖 Telegram Bot</Tab>
               <Tab>💬 Google Chat</Tab>
+              <Tab>💼 Slack</Tab>
             </TabList>
 
             <TabPanels>
@@ -538,6 +597,110 @@ const Integrations = () => {
                               <Button
                                 onClick={handleLinkGoogleChat}
                                 isLoading={googleChatLoading}
+                                colorScheme="blue"
+                                size="lg"
+                                w="full"
+                              >
+                                Connect
+                              </Button>
+                            </VStack>
+                          </VStack>
+                        </VStack>
+                      )}
+                    </VStack>
+                  </Card>
+                </VStack>
+              </TabPanel>
+
+              {/* Slack Tab */}
+              <TabPanel>
+                <VStack gap={6} align="stretch">
+                  <Card p={6}>
+                    <VStack align="start" gap={4}>
+                      <HStack justify="space-between" w="full">
+                        <VStack align="start" gap={1}>
+                          <Heading size="md">Slack</Heading>
+                          <Badge colorScheme={slackLinked ? 'green' : 'gray'}>
+                            {slackLinked ? 'Connected' : 'Not Connected'}
+                          </Badge>
+                        </VStack>
+                      </HStack>
+
+                      <Text fontSize="sm" color="gray.600">
+                        Post your updates to a Slack channel using an incoming webhook.
+                      </Text>
+
+                      <Divider />
+
+                      {slackLinked ? (
+                        <VStack align="stretch" gap={4} w="full">
+                          <Alert status="success" borderRadius="md">
+                            <AlertIcon />
+                            <Box>
+                              <AlertTitle>Connected</AlertTitle>
+                              <AlertDescription fontSize="sm">
+                                Your Slack webhook is configured: <Code fontSize="xs">{slackWebhook}</Code>
+                              </AlertDescription>
+                            </Box>
+                          </Alert>
+
+                          <Text fontSize="sm" color="gray.600">
+                            Updates can now be posted to your Slack channel with rich Block Kit formatting.
+                          </Text>
+
+                          <HStack gap={3}>
+                            <Button
+                              onClick={handleTestSlack}
+                              isLoading={slackLoading}
+                              colorScheme="blue"
+                            >
+                              Send Test Message
+                            </Button>
+                            <Button
+                              onClick={handleUnlinkSlack}
+                              isLoading={slackLoading}
+                              colorScheme="red"
+                              variant="outline"
+                            >
+                              Disconnect
+                            </Button>
+                          </HStack>
+                        </VStack>
+                      ) : (
+                        <VStack align="stretch" gap={4} w="full">
+                          <Alert status="info" borderRadius="md">
+                            <AlertIcon />
+                            <Box>
+                              <AlertTitle fontSize="sm">How to Connect</AlertTitle>
+                              <AlertDescription fontSize="xs">
+                                1. Open api.slack.com/apps → your app (or create one)
+                                <br />
+                                2. Enable "Incoming Webhooks"
+                                <br />
+                                3. Add a webhook to a channel
+                                <br />
+                                4. Copy the webhook URL
+                                <br />
+                                5. Paste it below and click "Connect"
+                              </AlertDescription>
+                            </Box>
+                          </Alert>
+
+                          <VStack align="stretch" gap={2}>
+                            <Text fontSize="sm" fontWeight="bold">
+                              Webhook URL:
+                            </Text>
+                            <VStack align="stretch" gap={2}>
+                              <Input
+                                placeholder="https://hooks.slack.com/services/..."
+                                value={slackWebhookInput}
+                                onChange={(e) => setSlackWebhookInput(e.target.value)}
+                                size="lg"
+                                type="url"
+                              />
+                              <Button
+                                onClick={handleLinkSlack}
+                                isLoading={slackLoading}
                                 colorScheme="blue"
                                 size="lg"
                                 w="full"

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { zonedWallClockToUtc, partsInZone, addDays } from '../utils/timezone.js';
 
 /**
  * Scheduled Update Schema
@@ -93,54 +94,59 @@ const scheduledUpdateSchema = new mongoose.Schema(
 // Index for finding scheduled tasks to run
 scheduledUpdateSchema.index({ userId: 1, isActive: 1, nextRun: 1 });
 
-// Calculate next run time
+// Calculate the next run time, interpreting scheduledTime in the schedule's
+// timezone (not the server's) and returning a UTC instant.
 scheduledUpdateSchema.methods.calculateNextRun = function () {
   const now = new Date();
+  const tz = this.timezone || 'UTC';
   const [hours, minutes] = this.scheduledTime.split(':').map(Number);
+  const nowParts = partsInZone(now, tz);
 
-  let nextRun = new Date();
-  nextRun.setHours(hours, minutes, 0, 0);
+  // Build a UTC instant for the given wall-clock date at the scheduled time.
+  const at = ({ year, month, day }) =>
+    zonedWallClockToUtc({ year, month, day, hour: hours, minute: minutes }, tz);
 
   switch (this.scheduleType) {
-    case 'once':
-      if (this.scheduledDate) {
-        nextRun = new Date(this.scheduledDate);
-        nextRun.setHours(hours, minutes, 0, 0);
+    case 'once': {
+      const base = this.scheduledDate
+        ? partsInZone(new Date(this.scheduledDate), tz)
+        : nowParts;
+      return at(base);
+    }
+
+    case 'daily': {
+      let next = at(nowParts);
+      if (next <= now) {
+        next = at(addDays(nowParts, 1));
       }
-      break;
+      return next;
+    }
 
-    case 'daily':
-      // If today's time has passed, schedule for tomorrow
-      if (nextRun <= now) {
-        nextRun.setDate(nextRun.getDate() + 1);
+    case 'weekly': {
+      const targetDay = this.dayOfWeek ?? nowParts.weekday;
+      let daysUntil = targetDay - nowParts.weekday;
+      if (daysUntil < 0) daysUntil += 7;
+      let next = at(addDays(nowParts, daysUntil));
+      // Same day but the time already passed -> next week.
+      if (next <= now) {
+        next = at(addDays(nowParts, daysUntil + 7));
       }
-      break;
+      return next;
+    }
 
-    case 'weekly':
-      // Find next occurrence of the specified day of week
-      const targetDay = this.dayOfWeek;
-      const currentDay = nextRun.getDay();
-      let daysUntilTarget = targetDay - currentDay;
-
-      if (daysUntilTarget < 0 || (daysUntilTarget === 0 && nextRun <= now)) {
-        daysUntilTarget += 7;
+    case 'monthly': {
+      const dom = this.dayOfMonth ?? nowParts.day;
+      let next = at({ year: nowParts.year, month: nowParts.month, day: dom });
+      if (next <= now) {
+        // month + 1 overflows into the next year correctly via Date.UTC.
+        next = at({ year: nowParts.year, month: nowParts.month + 1, day: dom });
       }
+      return next;
+    }
 
-      nextRun.setDate(nextRun.getDate() + daysUntilTarget);
-      break;
-
-    case 'monthly':
-      // Set to the specified day of month
-      nextRun.setDate(this.dayOfMonth);
-
-      // If this month's date has passed, schedule for next month
-      if (nextRun <= now) {
-        nextRun.setMonth(nextRun.getMonth() + 1);
-      }
-      break;
+    default:
+      return at(nowParts);
   }
-
-  return nextRun;
 };
 
 const ScheduledUpdate = mongoose.model('ScheduledUpdate', scheduledUpdateSchema);

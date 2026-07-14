@@ -112,6 +112,29 @@ describe('NotificationPreferences page', () => {
     );
   });
 
+  it('changes the summary mode and saves it', async () => {
+    let putBody = null;
+    server.use(
+      http.put(`${API}/notification-preferences`, async ({ request }) => {
+        putBody = await request.json();
+        return HttpResponse.json({ success: true, data: putBody });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<NotificationPreferences />);
+    await screen.findByRole('heading', { name: /Notification Content/ });
+
+    await user.selectOptions(
+      screen.getByLabelText('Notification content mode'),
+      'summary'
+    );
+    await user.click(screen.getByRole('button', { name: 'Save Preferences' }));
+
+    expect(await screen.findByText('Preferences saved')).toBeInTheDocument();
+    await waitFor(() => expect(putBody?.summaryMode).toBe('summary'));
+  });
+
   it('shows an error toast when saving fails', async () => {
     server.use(
       http.put(`${API}/notification-preferences`, () =>
