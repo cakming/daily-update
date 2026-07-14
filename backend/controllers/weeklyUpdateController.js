@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import Update from '../models/Update.js';
 import { processWeeklyUpdate, deriveSummary } from '../services/claudeService.js';
 import { formatUpdate } from '../services/updateFormatter.js';
+import { dispatchOnCreate } from '../services/notificationDispatcher.js';
 
 /**
  * @desc    Generate a weekly update from daily updates
@@ -172,6 +173,9 @@ export const createWeeklyUpdate = async (req, res) => {
     updateData.dailyUpdates = coveredDailies.map((d) => d._id);
 
     const update = await Update.create(updateData);
+
+    // Auto-push to linked bots when the user enabled sendOnCreate.
+    await dispatchOnCreate(req.user._id, update);
 
     res.status(201).json({
       success: true,

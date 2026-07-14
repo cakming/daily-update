@@ -55,6 +55,7 @@ const NotificationPreferences = () => {
     botNotifications: {
       telegram: true,
       googleChat: true,
+      slack: true,
       sendOnCreate: false,
       sendDailySummary: false,
       sendWeeklySummary: true,
@@ -457,6 +458,23 @@ const NotificationPreferences = () => {
                     isChecked={preferences.botNotifications.googleChat}
                     onChange={(e) =>
                       updatePreference('botNotifications', 'googleChat', e.target.checked)
+                    }
+                  />
+                </FormControl>
+
+                <Divider />
+
+                <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <FormLabel mb={0}>Slack Notifications</FormLabel>
+                    <Text fontSize="xs" color="gray.600">
+                      Post notifications to your Slack channel
+                    </Text>
+                  </Box>
+                  <Switch
+                    isChecked={preferences.botNotifications.slack !== false}
+                    onChange={(e) =>
+                      updatePreference('botNotifications', 'slack', e.target.checked)
                     }
                   />
                 </FormControl>

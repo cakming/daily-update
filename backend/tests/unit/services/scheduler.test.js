@@ -106,10 +106,15 @@ jest.unstable_mockModule('../../../models/ScheduleHistory.js', () => ({
   default: MockHistory,
 }));
 
-// NotificationPreference is read by updateFormatter.getSummaryMode (invoked from
-// sendScheduledEmail); return null so the mode defaults to 'full'.
+// NotificationPreference is read by updateFormatter.getSummaryMode (via
+// .select()) and by shouldSendNotification (direct await). findOne returns a
+// promise-that-resolves-null which also has .select(), satisfying both; null
+// prefs => default 'full' summary and no quiet hours.
 jest.unstable_mockModule('../../../models/NotificationPreference.js', () => ({
-  default: { findOne: () => ({ select: () => Promise.resolve(null) }) },
+  default: {
+    findOne: () =>
+      Object.assign(Promise.resolve(null), { select: () => Promise.resolve(null) }),
+  },
 }));
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ import User from '../models/User.js';
 import { getTransporter, emailTemplates } from '../config/email.js';
 import { processDailyUpdate, processWeeklyUpdate } from './claudeService.js';
 import { getSummaryMode } from './updateFormatter.js';
+import { shouldSendNotification } from '../controllers/notificationPreferenceController.js';
 import { subDays } from 'date-fns';
 
 /**
@@ -206,6 +207,12 @@ const sendScheduledEmail = async (scheduled, update) => {
   const transporter = getTransporter();
   if (!transporter) {
     console.log('Email not configured, skipping email send');
+    return 'skipped';
+  }
+
+  // Respect quiet hours for automatic (scheduled) sends.
+  if (!(await shouldSendNotification(scheduled.userId))) {
+    console.log('Within quiet hours, skipping scheduled email');
     return 'skipped';
   }
 

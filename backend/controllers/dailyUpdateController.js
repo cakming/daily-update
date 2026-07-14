@@ -1,5 +1,6 @@
 import Update from '../models/Update.js';
 import { processDailyUpdate } from '../services/claudeService.js';
+import { dispatchOnCreate } from '../services/notificationDispatcher.js';
 
 /**
  * @desc    Create a new daily update
@@ -65,6 +66,10 @@ export const createDailyUpdate = async (req, res) => {
     }
 
     const update = await Update.create(updateData);
+
+    // Auto-push to linked bots when the user enabled sendOnCreate (no-op
+    // otherwise; never throws).
+    await dispatchOnCreate(req.user._id, update);
 
     res.status(201).json({
       success: true,

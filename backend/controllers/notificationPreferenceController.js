@@ -1,4 +1,5 @@
 import NotificationPreference from '../models/NotificationPreference.js';
+import { partsInZone } from '../utils/timezone.js';
 
 /**
  * Notification Preference Controller
@@ -146,10 +147,12 @@ export const shouldSendNotification = async (userId) => {
       return true;
     }
 
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const { startTime, endTime, timezone } = preferences.quietHours;
 
-    const { startTime, endTime } = preferences.quietHours;
+    // Evaluate the current time in the user's quiet-hours timezone, not the
+    // server's.
+    const parts = partsInZone(new Date(), timezone || 'UTC');
+    const currentTime = `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`;
 
     // If quiet hours span across midnight
     if (startTime > endTime) {

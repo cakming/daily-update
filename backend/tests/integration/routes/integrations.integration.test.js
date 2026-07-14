@@ -18,6 +18,7 @@ const mockSendWeeklyGChat = jest.fn().mockResolvedValue(true);
 
 jest.unstable_mockModule('../../../services/telegramBot.js', () => ({
   sendTelegramMessage: mockSendTelegramMessage,
+  sendUpdateToTelegram: jest.fn().mockResolvedValue(true),
   startTelegramBot: jest.fn(),
   stopTelegramBot: jest.fn(),
   default: {},
