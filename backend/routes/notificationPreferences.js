@@ -16,9 +16,29 @@ router.use(protect);
 // @access  Private
 router.get('/', getPreferences);
 
-// @route   PUT /api/notification-preferences
-// @desc    Update user's notification preferences
-// @access  Private
+/**
+ * @openapi
+ * /notification-preferences:
+ *   put:
+ *     summary: Update notification preferences
+ *     tags: [Notifications]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               summaryMode:
+ *                 type: string
+ *                 enum: [full, summary]
+ *                 description: 'Full formatted output, or the short AI summary, in notifications'
+ *               emailNotifications: { type: object }
+ *               botNotifications: { type: object }
+ *               quietHours: { type: object }
+ *     responses:
+ *       200: { description: Updated preferences }
+ */
 router.put('/', updatePreferences);
 
 // @route   POST /api/notification-preferences/reset
