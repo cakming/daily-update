@@ -88,6 +88,21 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// jsdom lacks Element.scrollTo; Chakra's Menu calls it on open.
+if (!Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = vi.fn();
+}
+
+// @zag-js/focus-visible (used by Chakra's Checkbox) reassigns `node.focus` on
+// elements. jsdom exposes focus as a getter-only accessor on the prototype, so
+// instance assignment throws. Redefine it as a writable data property (keeping
+// the original implementation) so the assignment succeeds.
+Object.defineProperty(HTMLElement.prototype, 'focus', {
+  configurable: true,
+  writable: true,
+  value: HTMLElement.prototype.focus || function () {},
+});
+
 // Mock matchMedia (for responsive design tests)
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
