@@ -6,6 +6,11 @@ import {
   sendDailyUpdateToGoogleChat,
   sendWeeklySummaryToGoogleChat,
 } from '../services/googleChat.js';
+import {
+  sendSlackMessage,
+  sendDailyUpdateToSlack,
+  sendWeeklySummaryToSlack,
+} from '../services/slack.js';
 import { getSummaryMode } from '../services/updateFormatter.js';
 
 /**
@@ -432,5 +437,166 @@ export const sendGoogleChatWeekly = async (req, res) => {
       message: 'Failed to send summary to Google Chat',
       error: error.message,
     });
+  }
+};
+
+/**
+ * @route   POST /api/integrations/slack/link
+ * @desc    Link a Slack incoming webhook
+ * @access  Private
+ */
+export const linkSlack = async (req, res) => {
+  try {
+    const { webhookUrl } = req.body;
+
+    if (!webhookUrl) {
+      return res.status(400).json({ success: false, message: 'Please provide a webhook URL' });
+    }
+    if (!webhookUrl.startsWith('https://hooks.slack.com/')) {
+      return res.status(400).json({ success: false, message: 'Invalid Slack webhook URL' });
+    }
+
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+    user.slackWebhook = webhookUrl;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({
+      success: true,
+      message: 'Slack webhook linked successfully',
+      data: { webhookUrl: webhookUrl.substring(0, 50) + '...' },
+    });
+  } catch (error) {
+    console.error('Link Slack error:', error);
+    res.status(500).json({ success: false, message: 'Failed to link Slack webhook', error: error.message });
+  }
+};
+
+/**
+ * @route   DELETE /api/integrations/slack/unlink
+ * @desc    Unlink the Slack webhook
+ * @access  Private
+ */
+export const unlinkSlack = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+
+    if (!user.slackWebhook) {
+      return res.status(400).json({ success: false, message: 'No Slack webhook is linked' });
+    }
+
+    user.slackWebhook = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Slack webhook unlinked successfully' });
+  } catch (error) {
+    console.error('Unlink Slack error:', error);
+    res.status(500).json({ success: false, message: 'Failed to unlink Slack webhook', error: error.message });
+  }
+};
+
+/**
+ * @route   GET /api/integrations/slack/status
+ * @desc    Get Slack link status
+ * @access  Private
+ */
+export const getSlackStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+
+    res.json({
+      success: true,
+      data: {
+        linked: !!user.slackWebhook,
+        webhookUrl: user.slackWebhook ? user.slackWebhook.substring(0, 50) + '...' : null,
+      },
+    });
+  } catch (error) {
+    console.error('Get Slack status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get Slack status', error: error.message });
+  }
+};
+
+/**
+ * @route   POST /api/integrations/slack/test
+ * @desc    Send a test message to Slack
+ * @access  Private
+ */
+export const sendSlackTest = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+
+    if (!user.slackWebhook) {
+      return res.status(400).json({ success: false, message: 'Slack webhook is not linked' });
+    }
+
+    const sent = await sendSlackMessage(
+      user.slackWebhook,
+      '🧪 *Test Message*\nThis is a test message from Daily Update. Your Slack integration is working correctly! ✅'
+    );
+
+    if (sent) {
+      res.json({ success: true, message: 'Test message sent successfully' });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send test message' });
+    }
+  } catch (error) {
+    console.error('Send Slack test error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send test message', error: error.message });
+  }
+};
+
+/**
+ * @route   POST /api/integrations/slack/daily/:id
+ * @desc    Send a daily update to Slack
+ * @access  Private
+ */
+export const sendSlackDaily = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+    if (!user.slackWebhook) {
+      return res.status(400).json({ success: false, message: 'Slack webhook is not linked' });
+    }
+
+    const update = await loadOwnedUpdate(req, res, 'daily');
+    if (!update) return;
+
+    const summaryMode = await getSummaryMode(req.user._id);
+    const sent = await sendDailyUpdateToSlack(user.slackWebhook, update, user, { summaryMode });
+    if (!sent) {
+      return res.status(502).json({ success: false, message: 'Failed to send update to Slack' });
+    }
+
+    res.json({ success: true, message: 'Daily update sent to Slack' });
+  } catch (error) {
+    console.error('Send Slack daily error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send update to Slack', error: error.message });
+  }
+};
+
+/**
+ * @route   POST /api/integrations/slack/weekly/:id
+ * @desc    Send a weekly summary to Slack
+ * @access  Private
+ */
+export const sendSlackWeekly = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('+slackWebhook');
+    if (!user.slackWebhook) {
+      return res.status(400).json({ success: false, message: 'Slack webhook is not linked' });
+    }
+
+    const update = await loadOwnedUpdate(req, res, 'weekly');
+    if (!update) return;
+
+    const summaryMode = await getSummaryMode(req.user._id);
+    const sent = await sendWeeklySummaryToSlack(user.slackWebhook, update, user, { summaryMode });
+    if (!sent) {
+      return res.status(502).json({ success: false, message: 'Failed to send summary to Slack' });
+    }
+
+    res.json({ success: true, message: 'Weekly summary sent to Slack' });
+  } catch (error) {
+    console.error('Send Slack weekly error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send summary to Slack', error: error.message });
   }
 };

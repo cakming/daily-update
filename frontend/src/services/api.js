@@ -180,6 +180,13 @@ export const integrationAPI = {
   testGoogleChat: () => api.post('/integrations/googlechat/test'),
   sendGoogleChatDaily: (id) => api.post(`/integrations/googlechat/daily/${id}`),
   sendGoogleChatWeekly: (id) => api.post(`/integrations/googlechat/weekly/${id}`),
+  // Slack
+  getSlackStatus: () => api.get('/integrations/slack/status'),
+  linkSlack: (webhookUrl) => api.post('/integrations/slack/link', { webhookUrl }),
+  unlinkSlack: () => api.delete('/integrations/slack/unlink'),
+  testSlack: () => api.post('/integrations/slack/test'),
+  sendSlackDaily: (id) => api.post(`/integrations/slack/daily/${id}`),
+  sendSlackWeekly: (id) => api.post(`/integrations/slack/weekly/${id}`),
 };
 
 export const scheduleAPI = {

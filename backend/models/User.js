@@ -63,6 +63,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     select: false
   },
+  slackWebhook: {
+    type: String,
+    select: false
+  },
   avatar: {
     type: String,
     default: null

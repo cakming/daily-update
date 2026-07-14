@@ -10,6 +10,12 @@ import {
   sendGoogleChatTest,
   sendGoogleChatDaily,
   sendGoogleChatWeekly,
+  linkSlack,
+  unlinkSlack,
+  getSlackStatus,
+  sendSlackTest,
+  sendSlackDaily,
+  sendSlackWeekly,
 } from '../controllers/integrationController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -31,5 +37,13 @@ router.delete('/googlechat/unlink', unlinkGoogleChat);
 router.post('/googlechat/test', sendGoogleChatTest);
 router.post('/googlechat/daily/:id', sendGoogleChatDaily);
 router.post('/googlechat/weekly/:id', sendGoogleChatWeekly);
+
+// Slack routes
+router.get('/slack/status', getSlackStatus);
+router.post('/slack/link', linkSlack);
+router.delete('/slack/unlink', unlinkSlack);
+router.post('/slack/test', sendSlackTest);
+router.post('/slack/daily/:id', sendSlackDaily);
+router.post('/slack/weekly/:id', sendSlackWeekly);
 
 export default router;
