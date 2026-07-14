@@ -324,6 +324,34 @@ const History = () => {
     }
   };
 
+  const handleShare = async (update) => {
+    try {
+      const response = await weeklyUpdateAPI.enableShare(update._id);
+      const token = response.data.data.shareToken;
+      const url = `${window.location.origin}/share/${token}`;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // Clipboard may be unavailable; the URL is still shown in the toast.
+      }
+      toast({
+        title: 'Share link copied',
+        description: url,
+        status: 'success',
+        duration: 6000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to create share link',
+        description: error.response?.data?.message || 'An error occurred',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleEmail = (update, type) => {
     setEmailUpdate(update);
     setEmailUpdateType(type);
@@ -437,6 +465,16 @@ const History = () => {
                 isLoading={sendingSlackId === update._id}
               >
                 Slack
+              </Button>
+            )}
+            {type === 'weekly' && (
+              <Button
+                onClick={() => handleShare(update)}
+                colorScheme="orange"
+                variant="outline"
+                size="sm"
+              >
+                Share
               </Button>
             )}
             <Button

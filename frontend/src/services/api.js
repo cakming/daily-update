@@ -77,6 +77,12 @@ export const weeklyUpdateAPI = {
   getById: (id) => api.get(`/weekly-updates/${id}`),
   update: (id, data) => api.put(`/weekly-updates/${id}`, data),
   delete: (id) => api.delete(`/weekly-updates/${id}`),
+  enableShare: (id) => api.post(`/weekly-updates/${id}/share`),
+  disableShare: (id) => api.delete(`/weekly-updates/${id}/share`),
+};
+
+export const publicAPI = {
+  getSharedUpdate: (token) => api.get(`/public/updates/${token}`),
 };
 
 // Company APIs

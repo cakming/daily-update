@@ -78,6 +78,13 @@ const updateSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Update'
   }],
+  // When set, this update is viewable (read-only) at a public share URL keyed
+  // by the token. Absent = not shared.
+  shareToken: {
+    type: String,
+    index: true,
+    sparse: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

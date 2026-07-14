@@ -6,7 +6,9 @@ import {
   getWeeklyUpdates,
   getWeeklyUpdateById,
   updateWeeklyUpdate,
-  deleteWeeklyUpdate
+  deleteWeeklyUpdate,
+  enableShare,
+  disableShare
 } from '../controllers/weeklyUpdateController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -179,5 +181,7 @@ router.get('/', getWeeklyUpdates);
 router.get('/:id', getWeeklyUpdateById);
 router.put('/:id', updateWeeklyUpdate);
 router.delete('/:id', deleteWeeklyUpdate);
+router.post('/:id/share', enableShare);
+router.delete('/:id/share', disableShare);
 
 export default router;

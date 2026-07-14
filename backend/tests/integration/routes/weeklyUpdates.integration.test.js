@@ -426,4 +426,50 @@ describe('Weekly Updates API Integration Tests', () => {
         .expect(200);
     });
   });
+
+  describe('Public sharing', () => {
+    const createWeekly = () =>
+      Update.create(
+        createWeeklyUpdateFixture(testUser._id, {
+          companyId: undefined,
+          formattedOutput: 'Shared weekly body',
+        })
+      );
+
+    it('enables a share link, serves it publicly (sanitized), then disables it', async () => {
+      const update = await createWeekly();
+
+      // Enable sharing -> get a token
+      const enable = await request(app)
+        .post(`/api/weekly-updates/${update._id}/share`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      const token = enable.body.data.shareToken;
+      expect(token).toBeTruthy();
+
+      // Public fetch (NO auth) returns presentation fields only.
+      const pub = await request(app).get(`/api/public/updates/${token}`).expect(200);
+      expect(pub.body.data.formattedOutput).toBe('Shared weekly body');
+      expect(pub.body.data.type).toBe('weekly');
+      expect(pub.body.data.userId).toBeUndefined();
+      expect(pub.body.data.rawInput).toBeUndefined();
+      expect(pub.body.data.shareToken).toBeUndefined();
+
+      // Disable sharing -> the token stops resolving.
+      await request(app)
+        .delete(`/api/weekly-updates/${update._id}/share`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+      await request(app).get(`/api/public/updates/${token}`).expect(404);
+    });
+
+    it('returns 404 for an unknown token', async () => {
+      await request(app).get('/api/public/updates/deadbeef').expect(404);
+    });
+
+    it('requires auth to enable sharing', async () => {
+      const update = await createWeekly();
+      await request(app).post(`/api/weekly-updates/${update._id}/share`).expect(401);
+    });
+  });
 });

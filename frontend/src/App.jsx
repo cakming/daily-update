@@ -28,6 +28,7 @@ const Schedules = lazy(() => import('./pages/Schedules'));
 const ScheduleHistory = lazy(() => import('./pages/ScheduleHistory'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const Teams = lazy(() => import('./pages/Teams'));
+const PublicUpdate = lazy(() => import('./pages/PublicUpdate'));
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
           <Route path="/verify-email/:verificationToken" element={<VerifyEmail />} />
+          <Route path="/share/:token" element={<PublicUpdate />} />
           <Route
             path="/dashboard"
             element={
