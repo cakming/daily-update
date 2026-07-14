@@ -52,7 +52,9 @@ IMPORTANT FORMATTING REQUIREMENTS:
 Technical Update to Transform:
 ${technicalText}
 
-Return ONLY the formatted update text, nothing else.`;
+Return the formatted update text. Then, on a final separate line, write the
+marker @@SUMMARY@@ followed by a single plain-text sentence (max 25 words)
+summarizing the update for a one-line preview.`;
 
     const message = await anthropic.messages.create({
       model: CLAUDE_MODEL,
@@ -64,7 +66,10 @@ Return ONLY the formatted update text, nothing else.`;
       }]
     });
 
-    const formattedOutput = message.content[0].text.trim();
+    // Split the model's one-line summary off the formatted body.
+    const { formattedOutput, aiSummary: modelSummary } = splitSummary(
+      message.content[0].text
+    );
 
     // Parse sections from the formatted output
     const sections = parseSections(formattedOutput);
@@ -72,7 +77,7 @@ Return ONLY the formatted update text, nothing else.`;
     return {
       formattedOutput,
       sections,
-      aiSummary: deriveSummary(formattedOutput, sections),
+      aiSummary: modelSummary || deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
@@ -134,7 +139,9 @@ IMPORTANT FORMATTING REQUIREMENTS:
 Daily Updates from this week:
 ${combinedUpdates}
 
-Return ONLY the formatted weekly update text, nothing else.`;
+Return the formatted weekly update text. Then, on a final separate line, write
+the marker @@SUMMARY@@ followed by a single plain-text sentence (max 25 words)
+summarizing the week for a one-line preview.`;
 
     const message = await anthropic.messages.create({
       model: CLAUDE_MODEL,
@@ -146,7 +153,10 @@ Return ONLY the formatted weekly update text, nothing else.`;
       }]
     });
 
-    const formattedOutput = message.content[0].text.trim();
+    // Split the model's one-line summary off the formatted body.
+    const { formattedOutput, aiSummary: modelSummary } = splitSummary(
+      message.content[0].text
+    );
 
     // Parse sections from the formatted output (adapt field names for weekly)
     const sections = parseWeeklySections(formattedOutput);
@@ -154,12 +164,25 @@ Return ONLY the formatted weekly update text, nothing else.`;
     return {
       formattedOutput,
       sections,
-      aiSummary: deriveSummary(formattedOutput, sections),
+      aiSummary: modelSummary || deriveSummary(formattedOutput, sections),
     };
   } catch (error) {
     console.error('Claude API Error:', error);
     throw new Error(`Failed to generate weekly update with Claude API: ${error.message}`);
   }
+};
+
+/**
+ * Split a model response into the formatted body and the one-line summary the
+ * prompt asks for after an @@SUMMARY@@ marker. If the marker is absent (older
+ * prompts, model variance) the whole response is the body and the summary is
+ * empty, letting callers fall back to deriveSummary().
+ */
+export const splitSummary = (raw = '') => {
+  const parts = String(raw).split(/@@SUMMARY@@/i);
+  const formattedOutput = parts[0].trim();
+  const aiSummary = (parts[1] || '').trim().replace(/^[:\-\s]+/, '');
+  return { formattedOutput, aiSummary };
 };
 
 /**
