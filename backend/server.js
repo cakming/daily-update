@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import app from './app.js';
 import { startScheduler } from './services/scheduler.js';
+import { startDigestScheduler } from './services/digestScheduler.js';
 import { startTelegramBot } from './services/telegramBot.js';
 
 // Load environment variables
@@ -12,6 +13,9 @@ connectDB();
 
 // Start scheduler service
 startScheduler();
+
+// Start digest email scheduler
+startDigestScheduler();
 
 // Start Telegram bot
 startTelegramBot();

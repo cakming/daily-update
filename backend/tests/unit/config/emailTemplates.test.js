@@ -83,4 +83,43 @@ describe('emailTemplates (config/email.js)', () => {
       expect(out.subject).toContain('No Company');
     });
   });
+
+  describe('digest', () => {
+    it('rolls up multiple updates with company, date and body', () => {
+      const updates = [
+        {
+          type: 'daily',
+          companyId: { name: 'Acme' },
+          date: new Date('2026-01-05'),
+          formattedOutput: 'Did the first thing',
+          tags: [],
+        },
+        {
+          type: 'weekly',
+          companyId: { name: 'Globex' },
+          dateRange: { start: new Date('2026-01-01'), end: new Date('2026-01-07') },
+          formattedOutput: 'Summed up the week',
+          tags: [],
+        },
+      ];
+
+      const out = emailTemplates.digest('daily', updates, baseUser);
+
+      expect(out.subject).toContain('2 updates');
+      expect(out.html).toContain('Acme');
+      expect(out.html).toContain('Did the first thing');
+      expect(out.html).toContain('Globex');
+      expect(out.text).toContain('Summed up the week');
+    });
+
+    it('singularizes the subject for one update', () => {
+      const out = emailTemplates.digest(
+        'weekly',
+        [{ type: 'weekly', dateRange: {}, formattedOutput: 'x', tags: [] }],
+        baseUser
+      );
+      expect(out.subject).toContain('1 update');
+      expect(out.subject).not.toContain('1 updates');
+    });
+  });
 });
