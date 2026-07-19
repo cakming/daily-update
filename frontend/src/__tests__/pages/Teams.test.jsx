@@ -96,6 +96,82 @@ describe('Teams page', () => {
     await waitFor(() => expect(posted).toEqual({ name: 'QA Team', description: '' }));
   });
 
+  const OWNED_TEAM = {
+    _id: 't1',
+    name: 'Engineering',
+    description: 'Eng team',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    owner: { _id: 'u1', name: 'Test User', email: 'test@example.com' },
+    members: [
+      {
+        userId: { _id: 'u1', name: 'Test User', email: 'test@example.com' },
+        role: 'owner',
+        joinedAt: '2026-01-01T00:00:00.000Z',
+      },
+      {
+        userId: { _id: 'u2', name: 'Bob', email: 'bob@example.com' },
+        role: 'member',
+        joinedAt: '2026-01-02T00:00:00.000Z',
+      },
+    ],
+  };
+
+  it('renders a team with its members', async () => {
+    server.use(
+      http.get(`${API}/teams`, () =>
+        HttpResponse.json({ success: true, data: [OWNED_TEAM], count: 1 })
+      )
+    );
+    render(<Teams />);
+    expect(await screen.findByRole('heading', { name: 'Engineering' })).toBeInTheDocument();
+    expect(await screen.findByText('Bob')).toBeInTheDocument();
+  });
+
+  it('adds a member to the selected team', async () => {
+    let posted = null;
+    server.use(
+      http.get(`${API}/teams`, () =>
+        HttpResponse.json({ success: true, data: [OWNED_TEAM], count: 1 })
+      ),
+      http.post(`${API}/teams/t1/members`, async ({ request }) => {
+        posted = await request.json();
+        return HttpResponse.json({ success: true, data: OWNED_TEAM });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<Teams />);
+
+    await user.click(await screen.findByRole('button', { name: /Add Member/ }));
+    await user.type(await screen.findByPlaceholderText('user@example.com'), 'carol@example.com');
+    const addButtons = screen.getAllByRole('button', { name: 'Add Member' });
+    await user.click(addButtons[addButtons.length - 1]);
+
+    expect(await screen.findByText('Member added successfully')).toBeInTheDocument();
+    await waitFor(() => expect(posted?.email).toBe('carol@example.com'));
+  });
+
+  it('removes a member from the selected team', async () => {
+    let removed = false;
+    server.use(
+      http.get(`${API}/teams`, () =>
+        HttpResponse.json({ success: true, data: [OWNED_TEAM], count: 1 })
+      ),
+      http.delete(`${API}/teams/t1/members/u2`, () => {
+        removed = true;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<Teams />);
+
+    await user.click(await screen.findByRole('button', { name: 'Remove member' }));
+
+    expect(await screen.findByText('Member removed successfully')).toBeInTheDocument();
+    await waitFor(() => expect(removed).toBe(true));
+  });
+
   it('shows an error toast when team creation fails', async () => {
     const user = userEvent.setup();
     server.use(

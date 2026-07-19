@@ -32,10 +32,10 @@ export default defineConfig({
       // green while preventing regressions. Target is 80% (matching the
       // backend) — raise these numbers as component tests are added.
       thresholds: {
-        statements: 73,
+        statements: 75,
         branches: 72,
-        lines: 73,
-        functions: 45,
+        lines: 75,
+        functions: 47,
       },
     },
   },
