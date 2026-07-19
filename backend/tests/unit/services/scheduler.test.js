@@ -106,6 +106,13 @@ jest.unstable_mockModule('../../../models/ScheduleHistory.js', () => ({
   default: MockHistory,
 }));
 
+// notificationDispatcher — scheduler pushes created updates to the schedule's
+// bot channels through this.
+const dispatchToChannels = jest.fn(() => Promise.resolve());
+jest.unstable_mockModule('../../../services/notificationDispatcher.js', () => ({
+  dispatchToChannels,
+}));
+
 // NotificationPreference is read by updateFormatter.getSummaryMode (via
 // .select()) and by shouldSendNotification (direct await). findOne returns a
 // promise-that-resolves-null which also has .select(), satisfying both; null
@@ -250,6 +257,7 @@ describe('Scheduler Service', () => {
       MockUpdate.find.mockClear();
       processDailyUpdate.mockClear();
       processWeeklyUpdate.mockClear();
+      dispatchToChannels.mockClear();
 
       cronCallback();
       await flush();
@@ -304,6 +312,26 @@ describe('Scheduler Service', () => {
       // One-time schedule is deactivated instead of rescheduled.
       expect(sched.isActive).toBe(false);
       expect(sched.calculateNextRun).not.toHaveBeenCalled();
+    });
+
+    it('delivers to the schedule\'s chosen bot channels', async () => {
+      const sched = makeScheduled({
+        type: 'daily',
+        sendEmail: false,
+        channels: { telegram: true, googleChat: false, slack: true },
+      });
+
+      await runCallback([sched]);
+
+      expect(dispatchToChannels).toHaveBeenCalledTimes(1);
+      const [, , channels] = dispatchToChannels.mock.calls[0];
+      expect(channels).toEqual({ telegram: true, googleChat: false, slack: true });
+    });
+
+    it('does not dispatch when no channels are selected', async () => {
+      const sched = makeScheduled({ type: 'daily', sendEmail: false });
+      await runCallback([sched]);
+      expect(dispatchToChannels).not.toHaveBeenCalled();
     });
 
     it('records a partial run when the email send fails', async () => {

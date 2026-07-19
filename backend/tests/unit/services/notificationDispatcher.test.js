@@ -40,7 +40,9 @@ jest.unstable_mockModule('../../../controllers/notificationPreferenceController.
   shouldSendNotification: jest.fn(() => Promise.resolve(quietOk)),
 }));
 
-const { dispatchOnCreate } = await import('../../../services/notificationDispatcher.js');
+const { dispatchOnCreate, dispatchToChannels } = await import(
+  '../../../services/notificationDispatcher.js'
+);
 
 describe('dispatchOnCreate', () => {
   beforeEach(() => {
@@ -96,5 +98,27 @@ describe('dispatchOnCreate', () => {
   it('never throws when a send fails', async () => {
     sendDailySlack.mockRejectedValueOnce(new Error('boom'));
     await expect(dispatchOnCreate('u1', { _id: 'up1' })).resolves.toBeUndefined();
+  });
+
+  describe('dispatchToChannels', () => {
+    it('sends only to the explicitly selected, linked channels', async () => {
+      await dispatchToChannels('u1', { _id: 'up1' }, { telegram: true, googleChat: false, slack: true });
+      expect(sendTelegram).toHaveBeenCalledTimes(1);
+      expect(sendDailyGChat).not.toHaveBeenCalled();
+      expect(sendDailySlack).toHaveBeenCalledTimes(1);
+    });
+
+    it('is a no-op when no channels are selected', async () => {
+      await dispatchToChannels('u1', { _id: 'up1' }, { telegram: false, googleChat: false, slack: false });
+      expect(sendTelegram).not.toHaveBeenCalled();
+    });
+
+    it('skips a selected channel the user has not linked', async () => {
+      foundUser = { _id: 'u1', name: 'Alice', telegramId: '123' }; // no gchat/slack webhooks
+      await dispatchToChannels('u1', { _id: 'up1' }, { telegram: true, googleChat: true, slack: true });
+      expect(sendTelegram).toHaveBeenCalledTimes(1);
+      expect(sendDailyGChat).not.toHaveBeenCalled();
+      expect(sendDailySlack).not.toHaveBeenCalled();
+    });
   });
 });

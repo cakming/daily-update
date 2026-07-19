@@ -8,24 +8,21 @@ import { getSummaryMode } from './updateFormatter.js';
 import { shouldSendNotification } from '../controllers/notificationPreferenceController.js';
 
 /**
- * Push a freshly-created update to the user's linked bot channels when
- * botNotifications.sendOnCreate is enabled, respecting quiet hours and the
- * per-channel toggles. Fire-and-forget: this never throws, so it can't fail the
- * update that triggered it.
+ * Push an update to an explicit set of bot channels. Each channel fires only if
+ * the user has it linked. Fire-and-forget: never throws.
+ *
+ * @param {string} userId
+ * @param {object} update - a saved Update (refs may be unpopulated)
+ * @param {{telegram?:boolean, googleChat?:boolean, slack?:boolean}} channels
  */
-export const dispatchOnCreate = async (userId, update) => {
+export const dispatchToChannels = async (userId, update, channels) => {
   try {
-    const prefs = await NotificationPreference.findOne({ userId });
-    if (!prefs?.botNotifications?.sendOnCreate) return;
-
-    // Quiet hours suppress automatic sends (manual sends bypass this).
-    if (!(await shouldSendNotification(userId))) return;
+    if (!channels || !(channels.telegram || channels.googleChat || channels.slack)) return;
 
     const user = await User.findById(userId).select('+googleChatWebhook +slackWebhook');
     if (!user) return;
 
-    // The created doc has unpopulated refs; populate so the formatter can read
-    // the company name and tag names.
+    // Populate refs so the formatter can read company/tag names.
     const populated = await Update.findById(update._id)
       .populate('companyId', 'name')
       .populate('tags', 'name');
@@ -33,20 +30,19 @@ export const dispatchOnCreate = async (userId, update) => {
 
     const isDaily = populated.type === 'daily';
     const opts = { summaryMode: await getSummaryMode(userId) };
-    const bot = prefs.botNotifications;
     const tasks = [];
 
-    if (user.telegramId && bot.telegram !== false) {
+    if (channels.telegram && user.telegramId) {
       tasks.push(sendUpdateToTelegram(user.telegramId, populated, opts));
     }
-    if (user.googleChatWebhook && bot.googleChat !== false) {
+    if (channels.googleChat && user.googleChatWebhook) {
       tasks.push(
         isDaily
           ? sendDailyUpdateToGoogleChat(user.googleChatWebhook, populated, user, opts)
           : sendWeeklySummaryToGoogleChat(user.googleChatWebhook, populated, user, opts)
       );
     }
-    if (user.slackWebhook && bot.slack !== false) {
+    if (channels.slack && user.slackWebhook) {
       tasks.push(
         isDaily
           ? sendDailyUpdateToSlack(user.slackWebhook, populated, user, opts)
@@ -56,8 +52,32 @@ export const dispatchOnCreate = async (userId, update) => {
 
     await Promise.allSettled(tasks);
   } catch (error) {
+    console.error('dispatchToChannels error:', error);
+  }
+};
+
+/**
+ * Push a freshly-created update to the user's linked bot channels when
+ * botNotifications.sendOnCreate is enabled, respecting quiet hours and the
+ * per-channel toggles. Fire-and-forget.
+ */
+export const dispatchOnCreate = async (userId, update) => {
+  try {
+    const prefs = await NotificationPreference.findOne({ userId });
+    if (!prefs?.botNotifications?.sendOnCreate) return;
+
+    // Quiet hours suppress automatic sends (manual sends bypass this).
+    if (!(await shouldSendNotification(userId))) return;
+
+    const bot = prefs.botNotifications;
+    await dispatchToChannels(userId, update, {
+      telegram: bot.telegram !== false,
+      googleChat: bot.googleChat !== false,
+      slack: bot.slack !== false,
+    });
+  } catch (error) {
     console.error('dispatchOnCreate error:', error);
   }
 };
 
-export default { dispatchOnCreate };
+export default { dispatchToChannels, dispatchOnCreate };

@@ -8,6 +8,7 @@ import { getTransporter, emailTemplates } from '../config/email.js';
 import { processDailyUpdate, processWeeklyUpdate } from './claudeService.js';
 import { getSummaryMode } from './updateFormatter.js';
 import { shouldSendNotification } from '../controllers/notificationPreferenceController.js';
+import { dispatchToChannels } from './notificationDispatcher.js';
 import { subDays } from 'date-fns';
 
 /**
@@ -141,6 +142,19 @@ const executeScheduledUpdate = async (scheduled) => {
       emailSent = emailResult === 'sent';
       if (emailResult === 'failed') {
         status = 'partial'; // Update created but email failed
+      }
+    }
+
+    // Deliver to the schedule's chosen bot channels (quiet hours suppress
+    // automatic sends). Each channel fires only if the user has it linked.
+    const ch = scheduled.channels;
+    if (createdUpdate && ch && (ch.telegram || ch.googleChat || ch.slack)) {
+      if (await shouldSendNotification(scheduled.userId)) {
+        await dispatchToChannels(scheduled.userId, createdUpdate, {
+          telegram: ch.telegram,
+          googleChat: ch.googleChat,
+          slack: ch.slack,
+        });
       }
     }
 

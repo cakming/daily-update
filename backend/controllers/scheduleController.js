@@ -103,6 +103,7 @@ export const createSchedule = async (req, res) => {
       timezone,
       recipients,
       sendEmail,
+      channels,
     } = req.body;
 
     // Validation
@@ -159,6 +160,7 @@ export const createSchedule = async (req, res) => {
       timezone: timezone || 'UTC',
       recipients: recipients || [],
       sendEmail: sendEmail || false,
+      channels: channels || {},
     });
 
     // Calculate next run
@@ -219,6 +221,7 @@ export const updateSchedule = async (req, res) => {
       timezone,
       recipients,
       sendEmail,
+      channels,
       isActive,
     } = req.body;
 
@@ -235,6 +238,7 @@ export const updateSchedule = async (req, res) => {
     if (timezone !== undefined) schedule.timezone = timezone;
     if (recipients !== undefined) schedule.recipients = recipients;
     if (sendEmail !== undefined) schedule.sendEmail = sendEmail;
+    if (channels !== undefined) schedule.channels = { ...schedule.channels?.toObject?.(), ...channels };
     if (isActive !== undefined) schedule.isActive = isActive;
 
     // Recalculate next run if schedule details changed
