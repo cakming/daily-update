@@ -5,6 +5,7 @@ import {
   Heading,
   VStack,
   HStack,
+  Checkbox,
   Text,
   Button,
   Card,
@@ -63,6 +64,7 @@ const Schedules = () => {
     timezone: 'UTC',
     recipients: [],
     sendEmail: false,
+    channels: { telegram: false, googleChat: false, slack: false },
   });
 
   useEffect(() => {
@@ -125,6 +127,11 @@ const Schedules = () => {
       timezone: schedule.timezone || 'UTC',
       recipients: schedule.recipients || [],
       sendEmail: schedule.sendEmail || false,
+      channels: {
+        telegram: schedule.channels?.telegram || false,
+        googleChat: schedule.channels?.googleChat || false,
+        slack: schedule.channels?.slack || false,
+      },
     });
     onOpen();
   };
@@ -519,6 +526,26 @@ const Schedules = () => {
                   />
                 </FormControl>
               )}
+
+              <FormControl>
+                <FormLabel mb={2}>Also deliver to (linked channels)</FormLabel>
+                <HStack gap={5}>
+                  {['telegram', 'googleChat', 'slack'].map((ch) => (
+                    <Checkbox
+                      key={ch}
+                      isChecked={!!formData.channels?.[ch]}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          channels: { ...formData.channels, [ch]: e.target.checked },
+                        })
+                      }
+                    >
+                      {ch === 'googleChat' ? 'Google Chat' : ch.charAt(0).toUpperCase() + ch.slice(1)}
+                    </Checkbox>
+                  ))}
+                </HStack>
+              </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter>

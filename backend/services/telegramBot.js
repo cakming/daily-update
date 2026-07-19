@@ -311,8 +311,23 @@ export const sendTelegramMessage = async (telegramId, message) => {
   }
 };
 
+/**
+ * Format an update via the shared formatter and send it to a Telegram chat.
+ * Used for auto-push on create. Returns the send outcome.
+ */
+export const sendUpdateToTelegram = async (telegramId, update, options = {}) => {
+  const view = formatUpdate(update, options);
+  const header = view.kind === 'weekly' ? '📊 Weekly Summary' : '📝 Daily Update';
+  let message = `${header} — ${view.companyLabel}\n\n${truncate(view.body, 3000)}`;
+  if (view.tags.length > 0) {
+    message += `\n\nTags: ${view.tags.join(', ')}`;
+  }
+  return sendTelegramMessage(telegramId, message);
+};
+
 export default {
   startTelegramBot,
   stopTelegramBot,
   sendTelegramMessage,
+  sendUpdateToTelegram,
 };

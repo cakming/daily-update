@@ -82,6 +82,13 @@ const scheduledUpdateSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Bot channels this schedule delivers the generated update to (in addition
+    // to email). Each fires only if the user also has that channel linked.
+    channels: {
+      telegram: { type: Boolean, default: false },
+      googleChat: { type: Boolean, default: false },
+      slack: { type: Boolean, default: false },
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
     },

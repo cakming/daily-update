@@ -33,6 +33,7 @@ const notificationPreferenceSchema = new mongoose.Schema(
     botNotifications: {
       telegram: { type: Boolean, default: true },
       googleChat: { type: Boolean, default: true },
+      slack: { type: Boolean, default: true },
       sendOnCreate: { type: Boolean, default: false },
       sendDailySummary: { type: Boolean, default: false },
       sendWeeklySummary: { type: Boolean, default: true },

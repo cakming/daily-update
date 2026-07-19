@@ -9,7 +9,7 @@
  * /integrations/telegram/link), linking Google Chat from its tab (POST
  * /integrations/googlechat/link), and the Google Chat link error branch.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import userEvent from '@testing-library/user-event';
 import { server } from '../../test-utils/mocks/server';
@@ -145,6 +145,45 @@ describe('Integrations page', () => {
       await screen.findByText('Slack linked successfully')
     ).toBeInTheDocument();
     await waitFor(() => expect(posted).toEqual({ webhookUrl: webhook }));
+  });
+
+  it('sends a Telegram test message when linked', async () => {
+    let tested = false;
+    server.use(
+      ...statusHandlers({ linked: true, telegramId: '123' }, { linked: false }),
+      http.post(`${API}/integrations/telegram/test`, () => {
+        tested = true;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<Integrations />);
+
+    await user.click(await screen.findByRole('button', { name: /Send Test Message/ }));
+
+    expect(await screen.findByText('Test message sent')).toBeInTheDocument();
+    await waitFor(() => expect(tested).toBe(true));
+  });
+
+  it('unlinks a linked Telegram account after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    let unlinked = false;
+    server.use(
+      ...statusHandlers({ linked: true, telegramId: '123' }, { linked: false }),
+      http.delete(`${API}/integrations/telegram/unlink`, () => {
+        unlinked = true;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<Integrations />);
+
+    await user.click(await screen.findByRole('button', { name: /Disconnect/ }));
+
+    expect(await screen.findByText('Telegram unlinked')).toBeInTheDocument();
+    await waitFor(() => expect(unlinked).toBe(true));
   });
 
   it('shows an error toast when Google Chat linking fails', async () => {

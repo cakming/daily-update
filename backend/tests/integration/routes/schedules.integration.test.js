@@ -53,6 +53,33 @@ describe('Schedules API Integration Tests', () => {
       expect(res.body.data.nextRun).toBeTruthy();
     });
 
+    it('persists per-schedule delivery channels', async () => {
+      const res = await request(app)
+        .post('/api/schedules')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          type: 'daily',
+          content: 'body',
+          scheduleType: 'daily',
+          scheduledTime: '09:30',
+          channels: { telegram: true, slack: true },
+        })
+        .expect(201);
+
+      expect(res.body.data.channels.telegram).toBe(true);
+      expect(res.body.data.channels.slack).toBe(true);
+      expect(res.body.data.channels.googleChat).toBe(false);
+
+      // And update flips one off.
+      const upd = await request(app)
+        .put(`/api/schedules/${res.body.data._id}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ channels: { telegram: false } })
+        .expect(200);
+      expect(upd.body.data.channels.telegram).toBe(false);
+      expect(upd.body.data.channels.slack).toBe(true); // merged, not replaced
+    });
+
     it('should reject when required fields are missing', async () => {
       const res = await request(app)
         .post('/api/schedules')

@@ -236,6 +236,7 @@ const Teams = () => {
   };
 
   const getUserRole = (team) => {
+    if (!user) return null; // user still loading; avoid dereferencing null
     if (team.owner._id === user._id || team.owner === user._id) return 'owner';
     const member = team.members?.find(m => m.userId._id === user._id || m.userId === user._id);
     return member?.role || null;

@@ -4,6 +4,7 @@ import app from '../../../app.js';
 import User from '../../../models/User.js';
 import NotificationPreference from '../../../models/NotificationPreference.js';
 import { generateToken } from '../../../middleware/auth.js';
+import { shouldSendNotification } from '../../../controllers/notificationPreferenceController.js';
 import { connectTestDB, closeTestDB, clearTestDB } from '../../setup/testDb.js';
 import { createUserFixture } from '../../setup/fixtures.js';
 
@@ -99,6 +100,26 @@ describe('Notification Preferences API Integration Tests', () => {
 
     it('should require authentication', async () => {
       await request(app).put('/api/notification-preferences').send({}).expect(401);
+    });
+  });
+
+  describe('shouldSendNotification (quiet hours)', () => {
+    it('returns true when no preferences exist', async () => {
+      expect(await shouldSendNotification(testUser._id)).toBe(true);
+    });
+
+    it('returns true when quiet hours are disabled', async () => {
+      await NotificationPreference.create({ userId: testUser._id });
+      expect(await shouldSendNotification(testUser._id)).toBe(true);
+    });
+
+    it('allows sending outside a quiet window (start == end never suppresses)', async () => {
+      await NotificationPreference.create({
+        userId: testUser._id,
+        quietHours: { enabled: true, startTime: '00:00', endTime: '00:00', timezone: 'UTC' },
+      });
+      // start == end -> normal branch -> currentTime >= '00:00' is always true.
+      expect(await shouldSendNotification(testUser._id)).toBe(true);
     });
   });
 

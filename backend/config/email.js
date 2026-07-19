@@ -361,6 +361,64 @@ This email was sent from Daily Update App
       `.trim(),
     };
   },
+
+  /**
+   * Digest email template — a roll-up of several updates.
+   * @param {'daily'|'weekly'} period
+   * @param {Array} updates - populated Update docs
+   * @param {object} user
+   * @param {object} [options] - { summaryMode }
+   */
+  digest: (period, updates, user, options = {}) => {
+    const label = period === 'daily' ? 'Daily' : 'Weekly';
+    const heading = period === 'daily' ? '🗞️ Your Daily Digest' : '🗞️ Your Weekly Digest';
+
+    const items = updates.map((update) => {
+      const view = formatUpdate(update, options);
+      const when = view.date
+        ? new Date(view.date).toLocaleDateString()
+        : view.dateRange?.start
+        ? `${new Date(view.dateRange.start).toLocaleDateString()} – ${new Date(view.dateRange.end).toLocaleDateString()}`
+        : '';
+      return { view, when };
+    });
+
+    const itemsHtml = items
+      .map(
+        ({ view, when }) => `
+        <div style="border-left:3px solid #3182CE;padding:8px 14px;margin:14px 0;background:#F7FAFC;border-radius:4px;">
+          <div style="font-size:13px;color:#666;">
+            <strong>${view.title}</strong> · ${view.companyLabel}${when ? ` · ${when}` : ''}
+          </div>
+          <div style="margin-top:6px;white-space:pre-wrap;">${view.body}</div>
+        </div>`
+      )
+      .join('');
+
+    const itemsText = items
+      .map(({ view, when }) => `• ${view.title} — ${view.companyLabel}${when ? ` (${when})` : ''}\n${view.body}\n`)
+      .join('\n');
+
+    return {
+      subject: `${label} Digest — ${updates.length} update${updates.length === 1 ? '' : 's'}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family:'Segoe UI',Tahoma,sans-serif;line-height:1.6;color:#333;max-width:640px;margin:0 auto;padding:20px;background:#f5f5f5;">
+          <div style="background:#fff;border-radius:8px;padding:28px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+            <h1 style="color:#3182CE;font-size:22px;margin-top:0;">${heading}</h1>
+            <p style="color:#666;font-size:14px;">Hi ${user.name}, here ${updates.length === 1 ? 'is' : 'are'} your ${updates.length} update${updates.length === 1 ? '' : 's'} from the past ${period === 'daily' ? 'day' : 'week'}.</p>
+            ${itemsHtml}
+            <div style="margin-top:28px;padding-top:16px;border-top:1px solid #e0e0e0;text-align:center;color:#666;font-size:12px;">
+              <p>You're receiving this because ${period} digests are enabled in your notification settings.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      text: `${heading}\n\nHi ${user.name}, here are your ${updates.length} update(s) from the past ${period === 'daily' ? 'day' : 'week'}:\n\n${itemsText}\n---\nYou're receiving this because ${period} digests are enabled in your notification settings.`,
+    };
+  },
 };
 
 export default {
