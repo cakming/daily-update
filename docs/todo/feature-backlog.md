@@ -18,7 +18,7 @@
 - ✅ **Rate Limiting** - Already implemented on all auth and API endpoints
 
 ### Documentation
-- ✅ **REMAINING_FEATURES_GUIDE.md** - 8,700+ lines with implementation guides for all pending features
+- ✅ **REMAINING_FEATURES_GUIDE.md** - now an accurate feature-status snapshot (the pending features it once described have since shipped)
 - ✅ **SESSION_SUMMARY.md** - Comprehensive session documentation
 
 **Total Lines Added**: 1,090 lines

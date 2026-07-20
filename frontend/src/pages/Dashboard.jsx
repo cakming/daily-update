@@ -89,6 +89,13 @@ const Dashboard = () => {
       color: 'teal',
     },
     {
+      title: 'Achievements',
+      description: 'See your streaks and earn badges',
+      icon: '🏆',
+      action: () => navigate('/achievements'),
+      color: 'orange',
+    },
+    {
       title: 'Email Settings',
       description: 'Configure email delivery and send test emails',
       icon: '📧',

@@ -28,6 +28,7 @@ const Schedules = lazy(() => import('./pages/Schedules'));
 const ScheduleHistory = lazy(() => import('./pages/ScheduleHistory'));
 const Integrations = lazy(() => import('./pages/Integrations'));
 const Teams = lazy(() => import('./pages/Teams'));
+const Achievements = lazy(() => import('./pages/Achievements'));
 const PublicUpdate = lazy(() => import('./pages/PublicUpdate'));
 
 function App() {
@@ -86,6 +87,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/achievements"
+            element={
+              <ProtectedRoute>
+                <Achievements />
               </ProtectedRoute>
             }
           />

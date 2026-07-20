@@ -124,6 +124,11 @@ export const analyticsAPI = {
   getTrends: (params) => api.get('/analytics/trends', { params }),
 };
 
+// Gamification APIs (streaks + achievements)
+export const gamificationAPI = {
+  get: () => api.get('/gamification'),
+};
+
 // Template APIs
 export const templateAPI = {
   create: (data) => api.post('/templates', data),

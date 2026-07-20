@@ -1,4 +1,6 @@
 import Update from '../models/Update.js';
+import NotificationPreference from '../models/NotificationPreference.js';
+import { computeGamification } from '../services/gamificationService.js';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths } from 'date-fns';
 
 /**
@@ -53,41 +55,14 @@ export const getDashboard = async (req, res) => {
       weekly: allUpdates.filter(u => u.type === 'weekly').length
     };
 
-    // Calculate streak (consecutive days with updates)
-    const dailyUpdates = allUpdates
-      .filter(u => u.type === 'daily' && u.date)
-      .map(u => new Date(u.date).toDateString())
-      .sort((a, b) => new Date(b) - new Date(a));
-
-    let currentStreak = 0;
-    let maxStreak = 0;
-    let tempStreak = 0;
-    let lastDate = null;
-
-    for (let i = 0; i < dailyUpdates.length; i++) {
-      const currentDate = new Date(dailyUpdates[i]);
-
-      if (lastDate) {
-        const daysDiff = Math.floor((lastDate - currentDate) / (1000 * 60 * 60 * 24));
-        if (daysDiff === 1) {
-          tempStreak++;
-        } else {
-          maxStreak = Math.max(maxStreak, tempStreak);
-          tempStreak = 1;
-        }
-      } else {
-        tempStreak = 1;
-        // Check if today or yesterday
-        const today = new Date().toDateString();
-        const yesterday = new Date(Date.now() - 86400000).toDateString();
-        if (currentDate.toDateString() === today || currentDate.toDateString() === yesterday) {
-          currentStreak = 1;
-        }
-      }
-
-      lastDate = currentDate;
-    }
-    maxStreak = Math.max(maxStreak, tempStreak);
+    // Streaks: delegate to the shared gamification service so the dashboard and
+    // the /api/gamification endpoint always agree (and the current-streak math
+    // is correct — the old inline version could only ever report 0 or 1).
+    const pref = await NotificationPreference.findOne({ userId }).select('timezone').lean();
+    const { currentStreak, longestStreak: maxStreak } = computeGamification(
+      allUpdates,
+      pref?.timezone || 'UTC'
+    );
 
     // Activity by day of week
     const activityByDay = {

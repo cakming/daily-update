@@ -1,6 +1,7 @@
 # Production stack for a GCP Compute Engine VM.
 #
-# Key differences from docker-compose.prod.yml:
+# This is the production compose file. (docker-compose.yml is the local dev
+# stack with a bundled MongoDB.) Design points:
 #   - NO mongodb service. Mongo already runs on a separate in-network server;
 #     point MONGODB_URI at its private IP (e.g. 10.128.0.x:27017).
 #   - A single nginx reverse proxy terminates TLS on 443 and fans out to the
